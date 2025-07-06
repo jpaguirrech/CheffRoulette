@@ -125,8 +125,34 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - July 06, 2025: Implemented comprehensive README documentation for GitHub
 - July 06, 2025: Added monetization plan with freemium tier structure
 - July 06, 2025: Fixed TypeScript compilation errors in server routes and storage
+- July 06, 2025: Restructured app with proper landing page and authentication flow
+- July 06, 2025: Enhanced recipe parsing with platform-specific templates (TikTok, Instagram, YouTube, Pinterest)
+- July 06, 2025: Created dedicated dashboard for authenticated users with stats and gamification
+
+## Application Flow
+
+### Public Experience
+1. **Landing Page**: Marketing page explaining Chef Roulette's value proposition
+2. **Authentication**: Users must sign up/login to access features
+3. **Demo Mode**: `/demo` route shows dashboard functionality without authentication
+
+### Authenticated Experience
+1. **Dashboard**: Personal cooking hub with stats, recent recipes, and quick actions
+2. **Recipe Capture**: Enhanced AI parsing based on social media platform
+3. **My Recipes**: Personal recipe collection with filtering and organization
+4. **Gamification**: Points, streaks, challenges, and community features
+
+## User Authentication Strategy
+
+Currently implemented as a demo with toggle between public and private routes. Production implementation will include:
+- Social login (Google, Facebook, Apple)
+- Email/password authentication
+- Session management with secure tokens
+- Progressive web app capabilities for mobile users
 
 ## Changelog
 
 - July 06, 2025: Initial setup with React frontend, Express backend, and PostgreSQL database
 - July 06, 2025: Created comprehensive project documentation and GitHub README
+- July 06, 2025: Implemented proper landing page and dashboard separation
+- July 06, 2025: Enhanced AI recipe parsing with realistic platform-specific templates
