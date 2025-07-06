@@ -4,6 +4,8 @@ import {
   type Challenge, type InsertChallenge, type UserChallenge, type InsertUserChallenge,
   type UserRecipeAction, type InsertUserRecipeAction
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -372,4 +374,154 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async getRecipe(id: number): Promise<Recipe | undefined> {
+    const [recipe] = await db.select().from(recipes).where(eq(recipes.id, id));
+    return recipe || undefined;
+  }
+
+  async getRecipes(userId?: number, filters?: RecipeFilters): Promise<Recipe[]> {
+    let result: Recipe[];
+    
+    if (userId) {
+      result = await db.select().from(recipes).where(eq(recipes.userId, userId));
+    } else {
+      result = await db.select().from(recipes);
+    }
+    
+    if (filters) {
+      if (filters.cuisine) {
+        result = result.filter(recipe => recipe.cuisine === filters.cuisine);
+      }
+      if (filters.difficulty) {
+        result = result.filter(recipe => recipe.difficulty === filters.difficulty);
+      }
+      if (filters.category) {
+        result = result.filter(recipe => recipe.category === filters.category);
+      }
+      if (filters.cookTime) {
+        result = result.filter(recipe => recipe.cookTime && recipe.cookTime <= filters.cookTime!);
+      }
+      if (filters.dietaryTags && filters.dietaryTags.length > 0) {
+        result = result.filter(recipe => 
+          recipe.dietaryTags && recipe.dietaryTags.length > 0 && filters.dietaryTags!.some(tag => recipe.dietaryTags!.includes(tag))
+        );
+      }
+    }
+    
+    return result;
+  }
+
+  async createRecipe(insertRecipe: InsertRecipe): Promise<Recipe> {
+    const [recipe] = await db
+      .insert(recipes)
+      .values({
+        ...insertRecipe,
+        dietaryTags: insertRecipe.dietaryTags || [],
+      })
+      .returning();
+    return recipe;
+  }
+
+  async updateRecipe(id: number, updates: Partial<Recipe>): Promise<Recipe | undefined> {
+    const [recipe] = await db
+      .update(recipes)
+      .set(updates)
+      .where(eq(recipes.id, id))
+      .returning();
+    return recipe || undefined;
+  }
+
+  async deleteRecipe(id: number): Promise<boolean> {
+    const result = await db.delete(recipes).where(eq(recipes.id, id));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async getRandomRecipe(filters?: RecipeFilters): Promise<Recipe | undefined> {
+    const allRecipes = await this.getRecipes(undefined, filters);
+    if (allRecipes.length === 0) return undefined;
+    
+    const randomIndex = Math.floor(Math.random() * allRecipes.length);
+    return allRecipes[randomIndex];
+  }
+
+  async getChallenges(): Promise<Challenge[]> {
+    return await db.select().from(challenges).where(eq(challenges.isActive, true));
+  }
+
+  async getActiveUserChallenges(userId: number): Promise<UserChallenge[]> {
+    return await db.select().from(userChallenges)
+      .where(and(eq(userChallenges.userId, userId), eq(userChallenges.completed, false)));
+  }
+
+  async updateUserChallengeProgress(userId: number, challengeId: number, progress: number): Promise<UserChallenge | undefined> {
+    const [challenge] = await db.select().from(challenges).where(eq(challenges.id, challengeId));
+    if (!challenge) return undefined;
+    
+    const completed = progress >= challenge.target;
+    const [userChallenge] = await db
+      .update(userChallenges)
+      .set({
+        progress,
+        completed,
+        completedAt: completed ? new Date() : null,
+      })
+      .where(and(eq(userChallenges.userId, userId), eq(userChallenges.challengeId, challengeId)))
+      .returning();
+    
+    return userChallenge || undefined;
+  }
+
+  async recordUserAction(insertAction: InsertUserRecipeAction): Promise<UserRecipeAction> {
+    const [action] = await db
+      .insert(userRecipeActions)
+      .values(insertAction)
+      .returning();
+    return action;
+  }
+
+  async getUserActions(userId: number, recipeId?: number): Promise<UserRecipeAction[]> {
+    if (recipeId) {
+      return await db.select().from(userRecipeActions)
+        .where(and(eq(userRecipeActions.userId, userId), eq(userRecipeActions.recipeId, recipeId)));
+    } else {
+      return await db.select().from(userRecipeActions)
+        .where(eq(userRecipeActions.userId, userId));
+    }
+  }
+}
+
+export const storage = new DatabaseStorage();
