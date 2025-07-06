@@ -93,7 +93,40 @@ Chef Roulette is a modern web application that gamifies the cooking experience b
 
 Preferred communication style: Simple, everyday language.
 
+## Monetization Strategy
+
+Chef Roulette operates on a freemium model with a clear value proposition for upgrading to Pro:
+
+### Free Tier (Ad-supported)
+- Save unlimited recipes
+- Basic tagging & roulette functionality
+- Access to core recipe capture features
+- Community challenges (limited access)
+- Banner advertisements between recipe cards
+
+### Pro Tier ($4.99/month)
+- Pantry-aware roulette & "leftovers mode"
+- Complete nutritional & carbon footprint data
+- Ad-free experience (no video ads or banner ads)
+- Offline access & printable recipe PDFs
+- Early access to community challenges
+- Advanced filtering and search capabilities
+- Priority customer support
+
+### Revenue Streams
+1. **Subscription Revenue**: Primary income from Pro memberships
+2. **Advertising Revenue**: Display ads for free tier users
+3. **Affiliate Marketing**: Kitchen equipment and ingredient partnerships
+4. **Data Insights**: Anonymized cooking trend reports (enterprise)
+
+## Recent Changes
+
+- July 06, 2025: Initial Chef Roulette setup with full-stack architecture
+- July 06, 2025: Implemented comprehensive README documentation for GitHub
+- July 06, 2025: Added monetization plan with freemium tier structure
+- July 06, 2025: Fixed TypeScript compilation errors in server routes and storage
+
 ## Changelog
 
-Changelog:
-- July 06, 2025. Initial setup
+- July 06, 2025: Initial setup with React frontend, Express backend, and PostgreSQL database
+- July 06, 2025: Created comprehensive project documentation and GitHub README

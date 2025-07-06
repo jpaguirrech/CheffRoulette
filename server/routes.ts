@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRecipeSchema, insertUserRecipeActionSchema, type RecipeFilters } from "@shared/schema";
+import { insertRecipeSchema, insertUserRecipeActionSchema } from "@shared/schema";
 import { z } from "zod";
 
 const recipeFiltersSchema = z.object({
@@ -123,9 +123,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(actionData.userId);
         if (user) {
           await storage.updateUser(actionData.userId, {
-            recipesCooked: user.recipesCooked + 1,
-            points: user.points + 50, // Award points for cooking
-            weeklyPoints: user.weeklyPoints + 50,
+            recipesCooked: (user.recipesCooked || 0) + 1,
+            points: (user.points || 0) + 50, // Award points for cooking
+            weeklyPoints: (user.weeklyPoints || 0) + 50,
           });
         }
       }

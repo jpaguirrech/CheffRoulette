@@ -269,7 +269,7 @@ export class MemStorage implements IStorage {
       }
       if (filters.dietaryTags && filters.dietaryTags.length > 0) {
         recipes = recipes.filter(recipe => 
-          filters.dietaryTags!.some(tag => recipe.dietaryTags.includes(tag))
+          recipe.dietaryTags && recipe.dietaryTags.length > 0 && filters.dietaryTags!.some(tag => recipe.dietaryTags!.includes(tag))
         );
       }
     }
@@ -281,6 +281,19 @@ export class MemStorage implements IStorage {
     const recipe: Recipe = {
       id: this.currentRecipeId++,
       ...insertRecipe,
+      description: insertRecipe.description || null,
+      cookTime: insertRecipe.cookTime || null,
+      servings: insertRecipe.servings || null,
+      cuisine: insertRecipe.cuisine || null,
+      difficulty: insertRecipe.difficulty || null,
+      category: insertRecipe.category || null,
+      dietaryTags: insertRecipe.dietaryTags || [],
+      sourceUrl: insertRecipe.sourceUrl || null,
+      sourcePlatform: insertRecipe.sourcePlatform || null,
+      sourceUsername: insertRecipe.sourceUsername || null,
+      imageUrl: insertRecipe.imageUrl || null,
+      nutritionData: insertRecipe.nutritionData || null,
+      carbonScore: insertRecipe.carbonScore || null,
       likes: 0,
       isBookmarked: false,
     };
