@@ -1,0 +1,99 @@
+# Chef Roulette - Recipe Discovery & Cooking Platform
+
+## Overview
+
+Chef Roulette is a modern web application that gamifies the cooking experience by allowing users to discover recipes through a roulette-style interface. The platform combines social media recipe capture with gamification elements to encourage users to try new dishes and build cooking streaks.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React with TypeScript
+- **Styling**: Tailwind CSS with custom CSS variables for theming
+- **UI Components**: Radix UI primitives with shadcn/ui component library
+- **State Management**: TanStack Query for server state management
+- **Routing**: Wouter for lightweight client-side routing
+- **Build Tool**: Vite for development and build processes
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js
+- **Language**: TypeScript with ESM modules
+- **Database**: PostgreSQL with Drizzle ORM
+- **Database Provider**: Neon Database (serverless PostgreSQL)
+- **Session Management**: PostgreSQL-backed sessions using connect-pg-simple
+- **API Design**: RESTful API with JSON responses
+
+### Key Components
+
+#### Recipe Management
+- Recipe creation, storage, and retrieval
+- Recipe filtering by cuisine, difficulty, category, cook time, and dietary tags
+- Recipe capture from external URLs (TikTok, Instagram, YouTube, Pinterest)
+- Recipe rating and bookmarking system
+
+#### Gamification System
+- User points and streak tracking
+- Weekly challenges and progress monitoring
+- Achievement system with rewards
+- Leaderboard functionality
+
+#### User Management
+- User profiles with cooking statistics
+- Pro subscription system with enhanced features
+- User action tracking (likes, bookmarks, cooking completions)
+
+#### Social Features
+- Recipe sharing and discovery
+- Community challenges
+- User-generated content integration
+
+## Data Flow
+
+1. **Recipe Discovery**: Users can browse recipes through filters or use the roulette wheel for random selection
+2. **Recipe Capture**: Users input social media URLs to automatically extract recipe data
+3. **User Actions**: All user interactions (likes, bookmarks, cooking completions) are tracked for gamification
+4. **Progress Tracking**: User achievements and streaks are calculated and updated in real-time
+5. **Subscription Management**: Pro features are gated behind subscription checks
+
+## External Dependencies
+
+### Core Dependencies
+- **@neondatabase/serverless**: Serverless PostgreSQL database connection
+- **drizzle-orm**: Type-safe database queries and migrations
+- **@tanstack/react-query**: Server state management and caching
+- **@radix-ui/***: Headless UI components for accessibility
+- **express**: Web application framework
+- **zod**: Runtime type validation
+
+### Development Dependencies
+- **vite**: Build tool and development server
+- **typescript**: Type checking and compilation
+- **tailwindcss**: Utility-first CSS framework
+- **drizzle-kit**: Database schema management and migrations
+
+## Deployment Strategy
+
+### Development Setup
+- Vite development server with HMR (Hot Module Replacement)
+- Express server with middleware for API routes
+- PostgreSQL database with Drizzle migrations
+- Environment variables for database connection
+
+### Production Build
+- Vite builds the React frontend to static assets
+- esbuild bundles the Express server for Node.js runtime
+- Database migrations run via `drizzle-kit push`
+- Assets served from `dist/public` directory
+
+### Environment Configuration
+- `NODE_ENV` for environment detection
+- `DATABASE_URL` for PostgreSQL connection
+- `REPL_ID` for Replit-specific features
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## Changelog
+
+Changelog:
+- July 06, 2025. Initial setup
