@@ -1,23 +1,41 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table.
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table.
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  // Additional Chef Roulette fields
+  username: varchar("username", { length: 50 }).unique(),
   points: integer("points").default(0),
   streak: integer("streak").default(0),
   recipesCooked: integer("recipes_cooked").default(0),
   weeklyPoints: integer("weekly_points").default(0),
   isPro: boolean("is_pro").default(false),
-  proExpiresAt: timestamp("pro_expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const recipes = pgTable("recipes", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   ingredients: text("ingredients").array().notNull(),
@@ -50,7 +68,7 @@ export const challenges = pgTable("challenges", {
 
 export const userChallenges = pgTable("user_challenges", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   challengeId: integer("challenge_id").notNull(),
   progress: integer("progress").default(0),
   completed: boolean("completed").default(false),
@@ -59,20 +77,20 @@ export const userChallenges = pgTable("user_challenges", {
 
 export const userRecipeActions = pgTable("user_recipe_actions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   recipeId: integer("recipe_id").notNull(),
   action: text("action").notNull(), // cooked, liked, shared, bookmarked
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
   points: true,
   streak: true,
   recipesCooked: true,
   weeklyPoints: true,
   isPro: true,
-  proExpiresAt: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
@@ -99,6 +117,7 @@ export const insertUserRecipeActionSchema = createInsertSchema(userRecipeActions
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = typeof users.$inferInsert;
 export type Recipe = typeof recipes.$inferSelect;
 export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
 export type Challenge = typeof challenges.$inferSelect;

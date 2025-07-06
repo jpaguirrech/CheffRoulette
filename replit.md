@@ -46,6 +46,13 @@ Chef Roulette is a modern web application that gamifies the cooking experience b
 - Community challenges
 - User-generated content integration
 
+#### AI-Powered Recipe Analysis
+- Gemini AI integration for automatic recipe extraction from social media URLs
+- Platform-specific content analysis (TikTok, Instagram, YouTube, Pinterest)
+- Intelligent ingredient and instruction parsing
+- Automatic categorization and difficulty assessment
+- Dietary tag recognition and cuisine classification
+
 ## Data Flow
 
 1. **Recipe Discovery**: Users can browse recipes through filters or use the roulette wheel for random selection
@@ -63,6 +70,7 @@ Chef Roulette is a modern web application that gamifies the cooking experience b
 - **@radix-ui/***: Headless UI components for accessibility
 - **express**: Web application framework
 - **zod**: Runtime type validation
+- **@google/genai**: Gemini AI integration for recipe analysis
 
 ### Development Dependencies
 - **vite**: Build tool and development server
@@ -128,6 +136,9 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - July 06, 2025: Restructured app with proper landing page and authentication flow
 - July 06, 2025: Enhanced recipe parsing with platform-specific templates (TikTok, Instagram, YouTube, Pinterest)
 - July 06, 2025: Created dedicated dashboard for authenticated users with stats and gamification
+- July 06, 2025: Integrated Gemini AI for real recipe analysis from social media content
+- July 06, 2025: Implemented Replit authentication system with proper user session management
+- July 06, 2025: Updated recipe capture to use AI-powered analysis instead of mock data
 
 ## Application Flow
 

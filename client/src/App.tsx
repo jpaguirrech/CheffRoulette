@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import RecipeDetail from "@/pages/recipe-detail";
@@ -13,9 +13,16 @@ import { Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
 
 function Router() {
-  // For demo: Start with landing page, then implement authentication
-  // In production, this would check real authentication state
-  const isAuthenticated = false; // Change to true to see dashboard
+  const { isAuthenticated, isLoading } = useAuth();
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   // If user is not authenticated, show public routes
   if (!isAuthenticated) {

@@ -61,7 +61,7 @@ export default function Landing() {
               <Button 
                 size="lg" 
                 className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-3"
-                onClick={() => setShowSignup(true)}
+                onClick={() => window.location.href = '/api/login'}
               >
                 Start Capturing Recipes
                 <ArrowRight className="ml-2 w-5 h-5" />
