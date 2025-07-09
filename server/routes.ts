@@ -231,6 +231,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to demonstrate AI capabilities (temporary)
+  app.post("/api/test-ai-capture", async (req, res) => {
+    try {
+      const { url } = z.object({ url: z.string().url() }).parse(req.body);
+      
+      // Use Gemini AI to analyze and parse the recipe from the URL
+      const parsedRecipe = await parseRecipeFromUrl(url);
+      
+      res.json({
+        message: "AI analysis successful",
+        aiAnalysis: parsedRecipe,
+        note: "This demonstrates real Gemini AI analysis of social media content"
+      });
+    } catch (error) {
+      console.error("AI test error:", error);
+      res.status(400).json({ message: "AI analysis failed", error: error.message });
+    }
+  });
+
   // Capture recipe from URL with AI-powered parsing
   app.post("/api/capture-recipe", isAuthenticated, async (req: any, res) => {
     try {
