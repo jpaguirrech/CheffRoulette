@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { InsertRecipe } from "@shared/schema";
 
 const ai = new GoogleGenAI(process.env.GOOGLE_API_KEY || "");
+console.log("Google AI service initialized with key:", process.env.GOOGLE_API_KEY ? "✓" : "✗");
 
 export interface RecipeAnalysis {
   title: string;
@@ -52,12 +53,12 @@ export async function analyzeRecipeFromText(text: string, url: string): Promise<
       "dietaryTags": ["vegetarian"]
     }`;
 
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const prompt = `${systemPrompt}\n\nPlatform: ${platform}\n\nContent: ${text}`;
-    const response = await model.generateContent(prompt);
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: [{ text: `${systemPrompt}\n\nPlatform: ${platform}\n\nContent: ${text}` }]
+    });
 
-    const rawJson = response.response.text();
+    const rawJson = response.text;
     if (!rawJson) {
       throw new Error("Empty response from AI model");
     }
@@ -72,6 +73,76 @@ export async function analyzeRecipeFromText(text: string, url: string): Promise<
   } catch (error) {
     console.error("Error analyzing recipe:", error);
     throw new Error(`Failed to analyze recipe: ${error}`);
+  }
+}
+
+export async function analyzeRecipeFromVideo(videoUrl: string, url: string): Promise<RecipeAnalysis> {
+  try {
+    const platform = getPlatformFromUrl(url);
+    
+    const systemPrompt = `You are a recipe extraction expert. Analyze this cooking video and extract the complete recipe information.
+    
+    Watch the video carefully and extract:
+    - Recipe title based on what's being cooked
+    - Brief appetizing description
+    - Complete list of ingredients with quantities (observe what's used in the video)
+    - Step-by-step cooking instructions (follow the video sequence)
+    - Estimated cooking time
+    - Number of servings
+    - Difficulty level (Easy, Medium, Hard)
+    - Cuisine type
+    - Category (Main Course, Appetizer, Dessert, etc.)
+    - Any dietary tags you can identify
+    
+    Respond with JSON in this exact format:
+    {
+      "title": "Recipe Name",
+      "description": "Brief description",
+      "ingredients": ["ingredient 1 with quantity", "ingredient 2 with quantity"],
+      "instructions": ["step 1", "step 2"],
+      "cookTime": 30,
+      "servings": 4,
+      "difficulty": "Easy",
+      "cuisine": "Italian",
+      "category": "Main Course",
+      "dietaryTags": ["vegetarian"]
+    }`;
+
+    // For YouTube videos, we can pass the URL directly
+    if (platform === 'YouTube') {
+      const response = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: [
+          {
+            fileData: {
+              mimeType: "video/mp4",
+              fileUri: videoUrl
+            }
+          },
+          { text: systemPrompt }
+        ]
+      });
+      
+      const rawJson = response.text;
+      if (!rawJson) {
+        throw new Error("Empty response from AI model");
+      }
+
+      const data = JSON.parse(rawJson);
+      
+      return {
+        ...data,
+        platform,
+        originalUrl: url
+      };
+    } else {
+      // For other platforms, we'll use enhanced text analysis for now
+      // In a production system, you'd implement video download and upload
+      throw new Error(`Direct video analysis not yet implemented for ${platform}`);
+    }
+  } catch (error) {
+    console.error("Error analyzing recipe from video:", error);
+    throw new Error(`Failed to analyze recipe from video: ${error}`);
   }
 }
 
@@ -99,12 +170,12 @@ export async function analyzeRecipeFromImage(imageUrl: string, url: string): Pro
       "dietaryTags": ["vegetarian"]
     }`;
 
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
-    const prompt = `${systemPrompt}\n\nAnalyze this ${platform} image and create a recipe: ${imageUrl}`;
-    const response = await model.generateContent(prompt);
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash",
+      contents: [{ text: `${systemPrompt}\n\nAnalyze this ${platform} image and create a recipe: ${imageUrl}` }]
+    });
 
-    const rawJson = response.response.text();
+    const rawJson = response.text;
     if (!rawJson) {
       throw new Error("Empty response from AI model");
     }
