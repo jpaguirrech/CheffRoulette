@@ -14,7 +14,7 @@ export default function RecipeCapture() {
 
   const captureMutation = useMutation({
     mutationFn: async (url: string) => {
-      return await apiRequest("POST", "/api/capture-recipe", {
+      return await apiRequest("POST", "/api/recipes/capture", {
         url
       });
     },

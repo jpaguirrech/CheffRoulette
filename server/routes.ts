@@ -384,7 +384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Capture recipe from URL with AI-powered parsing
-  app.post("/api/capture-recipe", isAuthenticated, async (req: any, res) => {
+  app.post("/api/recipes/capture", isAuthenticated, async (req: any, res) => {
     try {
       const { url } = z.object({ url: z.string().url() }).parse(req.body);
       const userId = req.user.claims.sub;
