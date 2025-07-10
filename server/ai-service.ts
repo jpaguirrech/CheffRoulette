@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import type { InsertRecipe } from "@shared/schema";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI(process.env.GOOGLE_API_KEY || "");
 
 export interface RecipeAnalysis {
   title: string;
@@ -52,32 +52,12 @@ export async function analyzeRecipeFromText(text: string, url: string): Promise<
       "dietaryTags": ["vegetarian"]
     }`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      config: {
-        systemInstruction: systemPrompt,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            title: { type: "string" },
-            description: { type: "string" },
-            ingredients: { type: "array", items: { type: "string" } },
-            instructions: { type: "array", items: { type: "string" } },
-            cookTime: { type: "number" },
-            servings: { type: "number" },
-            difficulty: { type: "string", enum: ["Easy", "Medium", "Hard"] },
-            cuisine: { type: "string" },
-            category: { type: "string" },
-            dietaryTags: { type: "array", items: { type: "string" } }
-          },
-          required: ["title", "description", "ingredients", "instructions", "cookTime", "servings", "difficulty", "cuisine", "category", "dietaryTags"]
-        }
-      },
-      contents: `Platform: ${platform}\n\nContent: ${text}`
-    });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    const prompt = `${systemPrompt}\n\nPlatform: ${platform}\n\nContent: ${text}`;
+    const response = await model.generateContent(prompt);
 
-    const rawJson = response.text;
+    const rawJson = response.response.text();
     if (!rawJson) {
       throw new Error("Empty response from AI model");
     }
@@ -119,32 +99,12 @@ export async function analyzeRecipeFromImage(imageUrl: string, url: string): Pro
       "dietaryTags": ["vegetarian"]
     }`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      config: {
-        systemInstruction: systemPrompt,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            title: { type: "string" },
-            description: { type: "string" },
-            ingredients: { type: "array", items: { type: "string" } },
-            instructions: { type: "array", items: { type: "string" } },
-            cookTime: { type: "number" },
-            servings: { type: "number" },
-            difficulty: { type: "string", enum: ["Easy", "Medium", "Hard"] },
-            cuisine: { type: "string" },
-            category: { type: "string" },
-            dietaryTags: { type: "array", items: { type: "string" } }
-          },
-          required: ["title", "description", "ingredients", "instructions", "cookTime", "servings", "difficulty", "cuisine", "category", "dietaryTags"]
-        }
-      },
-      contents: `Analyze this ${platform} image and create a recipe: ${imageUrl}`
-    });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    const prompt = `${systemPrompt}\n\nAnalyze this ${platform} image and create a recipe: ${imageUrl}`;
+    const response = await model.generateContent(prompt);
 
-    const rawJson = response.text;
+    const rawJson = response.response.text();
     if (!rawJson) {
       throw new Error("Empty response from AI model");
     }
