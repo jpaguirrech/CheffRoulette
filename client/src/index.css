@@ -13,25 +13,25 @@
   --card-foreground: hsl(20, 14.3%, 4.1%);
   --border: hsl(20, 5.9%, 90%);
   --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(14, 100%, 60%);
+  --primary: hsl(142, 76%, 36%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(174, 60%, 51%);
+  --secondary: hsl(160, 60%, 45%);
   --secondary-foreground: hsl(0, 0%, 100%);
-  --accent: hsl(52, 100%, 70%);
+  --accent: hsl(120, 50%, 70%);
   --accent-foreground: hsl(0, 0%, 0%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
+  --ring: hsl(142, 76%, 36%);
   --radius: 0.5rem;
   
-  /* Custom Chef Roulette colors */
-  --chef-primary: hsl(14, 100%, 60%); /* #FF6B35 */
-  --chef-secondary: hsl(174, 60%, 51%); /* #4ECDC4 */
-  --chef-accent: hsl(52, 100%, 70%); /* #FFE66D */
-  --chef-coral: hsl(20, 100%, 66%); /* #FF8E53 */
+  /* Custom Chef Roulette colors - Green palette */
+  --chef-primary: hsl(142, 76%, 36%); /* #22C55E - Verde principal */
+  --chef-secondary: hsl(160, 60%, 45%); /* #10B981 - Verde secundario */
+  --chef-accent: hsl(120, 50%, 70%); /* #84CC16 - Verde claro */
+  --chef-emerald: hsl(158, 64%, 52%); /* #10B981 - Verde esmeralda */
   --chef-dark: hsl(210, 29%, 24%); /* #2C3E50 */
   --chef-medium: hsl(210, 22%, 29%); /* #34495E */
-  --chef-light: hsl(192, 15%, 94%); /* #ECF0F1 */
+  --chef-light: hsl(120, 15%, 94%); /* #F0F9FF - Verde muy claro */
 }
 
 .dark {
@@ -45,11 +45,11 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(14, 100%, 60%);
+  --primary: hsl(142, 76%, 36%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(174, 60%, 51%);
+  --secondary: hsl(160, 60%, 45%);
   --secondary-foreground: hsl(0, 0%, 100%);
-  --accent: hsl(52, 100%, 70%);
+  --accent: hsl(120, 50%, 70%);
   --accent-foreground: hsl(0, 0%, 0%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
@@ -79,16 +79,16 @@
   
   .chef-gradient-light {
     background: linear-gradient(135deg, 
-      hsl(14, 100%, 60%, 0.1), 
-      hsl(174, 60%, 51%, 0.1)
+      hsl(142, 76%, 36%, 0.1), 
+      hsl(160, 60%, 45%, 0.1)
     );
   }
   
   .chef-accent-gradient {
     background: linear-gradient(135deg, 
-      hsl(14, 100%, 60%, 0.1), 
-      hsl(174, 60%, 51%, 0.1), 
-      hsl(52, 100%, 70%, 0.1)
+      hsl(142, 76%, 36%, 0.1), 
+      hsl(160, 60%, 45%, 0.1), 
+      hsl(120, 50%, 70%, 0.1)
     );
   }
   

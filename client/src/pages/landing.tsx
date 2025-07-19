@@ -22,13 +22,13 @@ export default function Landing() {
   const [showSignup, setShowSignup] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       {/* Navigation */}
       <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <ChefHat className="w-8 h-8 mr-3 text-orange-600" />
+              <ChefHat className="w-8 h-8 mr-3 text-green-600" />
               <h1 className="text-xl font-bold text-gray-900">Chef Roulette</h1>
             </div>
             <div className="flex items-center space-x-4">
@@ -36,7 +36,7 @@ export default function Landing() {
                 Sign In
               </Button>
               <Button 
-                className="bg-orange-600 hover:bg-orange-700"
+                className="bg-green-600 hover:bg-green-700"
                 onClick={() => setShowSignup(true)}
               >
                 Get Started
@@ -60,7 +60,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="bg-orange-600 hover:bg-orange-700 text-lg px-8 py-3"
+                className="bg-green-600 hover:bg-green-700 text-lg px-8 py-3"
                 onClick={() => window.location.href = '/api/login'}
               >
                 Start Capturing Recipes
@@ -92,8 +92,8 @@ export default function Landing() {
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="text-center">
               <CardHeader>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <Smartphone className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Smartphone className="w-6 h-6 text-green-600" />
                 </div>
                 <CardTitle>Capture</CardTitle>
                 <CardDescription>
@@ -154,28 +154,28 @@ export default function Landing() {
               </h2>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <Zap className="w-5 h-5 text-orange-600 mt-1" />
+                  <Zap className="w-5 h-5 text-green-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900">AI-Powered Capture</h3>
                     <p className="text-gray-600">Extract complete recipes from any social media platform</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <TrendingUp className="w-5 h-5 text-orange-600 mt-1" />
+                  <TrendingUp className="w-5 h-5 text-green-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900">Cooking Streaks</h3>
                     <p className="text-gray-600">Build habits and earn points for trying new recipes</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <Users className="w-5 h-5 text-orange-600 mt-1" />
+                  <Users className="w-5 h-5 text-green-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900">Community Challenges</h3>
                     <p className="text-gray-600">Join weekly cooking challenges with other food lovers</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <Eye className="w-5 h-5 text-orange-600 mt-1" />
+                  <Eye className="w-5 h-5 text-green-600 mt-1" />
                   <div>
                     <h3 className="font-semibold text-gray-900">Smart Recommendations</h3>
                     <p className="text-gray-600">Get personalized suggestions based on your cooking history</p>
@@ -185,27 +185,27 @@ export default function Landing() {
             </div>
             <div className="bg-white p-8 rounded-lg shadow-lg">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-orange-600" />
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-green-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Join 10,000+ Food Lovers</h3>
                 <p className="text-gray-600">Who've organized their recipe collections</p>
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-orange-600">50K+</div>
+                  <div className="text-2xl font-bold text-green-600">50K+</div>
                   <div className="text-sm text-gray-600">Recipes Captured</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-orange-600">25K+</div>
+                  <div className="text-2xl font-bold text-green-600">25K+</div>
                   <div className="text-sm text-gray-600">Meals Cooked</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-orange-600">15K+</div>
+                  <div className="text-2xl font-bold text-green-600">15K+</div>
                   <div className="text-sm text-gray-600">Active Streaks</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-orange-600">95%</div>
+                  <div className="text-2xl font-bold text-green-600">95%</div>
                   <div className="text-sm text-gray-600">Success Rate</div>
                 </div>
               </div>

@@ -77,13 +77,13 @@ export default function RecipeCapture() {
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="text-base py-3 border-gray-300 focus:ring-2 focus:ring-[hsl(14,100%,60%)] focus:border-transparent"
+                  className="text-base py-3 border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
               <Button
                 onClick={handleCapture}
                 disabled={captureMutation.isPending}
-                className="bg-[hsl(14,100%,60%)] hover:bg-[hsl(14,100%,55%)] px-6 py-3"
+                className="bg-green-600 hover:bg-green-700 px-6 py-3"
               >
                 {captureMutation.isPending ? (
                   <>

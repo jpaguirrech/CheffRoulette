@@ -102,6 +102,7 @@ Chef Roulette is a modern web application that gamifies the cooking experience b
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Color scheme preference: Green color palette instead of orange throughout the application.
 
 ## Monetization Strategy
 

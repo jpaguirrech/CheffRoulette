@@ -62,7 +62,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gray-50">
         <Navigation user={user} onUpgradeClick={handleUpgradeClick} />
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-green-600" />
         </div>
       </div>
     );
@@ -85,7 +85,7 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
                 {totalRecipes} recipes saved
               </Badge>
               {user?.streak && user.streak > 0 && (
@@ -153,22 +153,22 @@ export default function Dashboard() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Hero Section */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg p-8 text-white">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-8 text-white">
               <h2 className="text-2xl font-bold mb-4">What's Cooking Today?</h2>
-              <p className="text-orange-100 mb-6">
+              <p className="text-green-100 mb-6">
                 Capture recipes from social media or spin the roulette to discover something new!
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg" 
-                  className="bg-white text-orange-600 hover:bg-gray-100"
+                  className="bg-white text-green-600 hover:bg-gray-100"
                 >
                   + Capture Recipe
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-orange-600"
+                  className="border-white text-white hover:bg-white hover:text-green-600"
                 >
                   🎰 Spin Roulette
                 </Button>
