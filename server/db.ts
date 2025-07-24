@@ -2,5 +2,8 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import { neon } from '@neondatabase/serverless';
 import * as schema from '@shared/schema';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Use Supabase connection string format
+const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:[YOUR-PASSWORD]@db.ctbcdiedhsaqibcvcdmd.supabase.co:5432/postgres';
+
+const sql = neon(connectionString);
 export const db = drizzle(sql, { schema });
