@@ -1,0 +1,501 @@
+-- ====================================
+-- CHEF ROULETTE DATABASE SCHEMA
+-- All tables for N8N automation workflow
+-- ====================================
+
+-- 1. Main table for social media content (videos, images, posts)
+CREATE TABLE social_media_content (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  
+  -- Unique identifiers
+  content_id VARCHAR UNIQUE, -- Generated after processing (platform-specific ID)
+  
+  -- URLs and file references
+  original_url VARCHAR NOT NULL,
+  file_name VARCHAR,
+  public_url VARCHAR,
+  bucket_name VARCHAR DEFAULT 'chef-roulette-media',
+  
+  -- Platform and content type information
+  platform VARCHAR NOT NULL CHECK (platform IN ('tiktok', 'instagram', 'youtube', 'pinterest', 'facebook', 'twitter')),
+  content_type VARCHAR NOT NULL CHECK (content_type IN ('video', 'image', 'reel', 'story', 'post')),
+  
+  -- Content metadata (filled after processing)
+  title TEXT,
+  description TEXT,
+  author VARCHAR,
+  author_username VARCHAR,
+  duration INTEGER, -- for videos (in seconds)
+  views INTEGER,
+  likes INTEGER,
+  shares INTEGER,
+  comments INTEGER,
+  hashtags JSONB,
+  music VARCHAR, -- for content with audio
+  
+  -- User and recipe data
+  user_id UUID REFERENCES auth.users(id),
+  recipe_name VARCHAR, -- user-provided name (optional)
+  
+  -- Processing status
+  status VARCHAR DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'error')),
+  needs_ai_processing BOOLEAN DEFAULT true,
+  error_message TEXT,
+  
+  -- Timestamps
+  created_at TIMESTAMP DEFAULT NOW(),
+  processing_started_at TIMESTAMP,
+  processed_at TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. Table for AI-extracted recipes
+CREATE TABLE extracted_recipes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  social_media_content_id UUID REFERENCES social_media_content(id) ON DELETE CASCADE,
+  
+  -- Core recipe data extracted by AI
+  recipe_title VARCHAR NOT NULL,
+  description TEXT,
+  ingredients JSONB, -- Array of ingredients with amounts and units
+  instructions JSONB, -- Array of step-by-step instructions
+  prep_time INTEGER, -- preparation time in minutes
+  cook_time INTEGER, -- cooking time in minutes
+  total_time INTEGER, -- prep_time + cook_time
+  servings INTEGER,
+  difficulty_level VARCHAR CHECK (difficulty_level IN ('easy', 'medium', 'hard')),
+  
+  -- Categorization and tagging
+  cuisine_type VARCHAR,
+  meal_type VARCHAR CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack', 'dessert')),
+  dietary_tags JSONB, -- vegetarian, vegan, gluten-free, etc.
+  chef_attribution VARCHAR, -- chef name if mentioned in content
+  
+  -- AI processing metadata
+  ai_confidence_score DECIMAL(3,2), -- 0.00 to 1.00
+  extraction_method VARCHAR DEFAULT 'gemini_video_analysis',
+  
+  -- Recipe status and approval
+  status VARCHAR DEFAULT 'draft' CHECK (status IN ('draft', 'reviewed', 'published')),
+  is_approved BOOLEAN DEFAULT false,
+  
+  -- Timestamps
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 3. User profiles for gamification and preferences
+CREATE TABLE user_profiles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) UNIQUE,
+  
+  -- Basic profile information
+  display_name VARCHAR,
+  avatar_url VARCHAR,
+  
+  -- Gamification system
+  points INTEGER DEFAULT 0,
+  level INTEGER DEFAULT 1,
+  recipes_count INTEGER DEFAULT 0,
+  recipes_cooked INTEGER DEFAULT 0,
+  favorite_cuisine VARCHAR,
+  
+  -- User preferences
+  dietary_preferences JSONB, -- user's dietary restrictions/preferences
+  cooking_skill_level VARCHAR DEFAULT 'beginner' CHECK (cooking_skill_level IN ('beginner', 'intermediate', 'advanced')),
+  
+  -- Timestamps
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 4. Processing jobs tracking (for debugging and monitoring)
+CREATE TABLE processing_jobs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  social_media_content_id UUID REFERENCES social_media_content(id),
+  
+  -- Job information
+  job_type VARCHAR NOT NULL, -- 'platform_detection', 'ai_extraction', 'categorization'
+  status VARCHAR DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
+  
+  -- Execution details
+  started_at TIMESTAMP,
+  completed_at TIMESTAMP,
+  execution_time_ms INTEGER,
+  error_details JSONB,
+  result_data JSONB,
+  
+  -- N8N workflow information
+  workflow_execution_id VARCHAR,
+  node_name VARCHAR,
+  
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 5. Recipe collections (for organizing saved recipes)
+CREATE TABLE recipe_collections (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  
+  -- Collection details
+  name VARCHAR NOT NULL,
+  description TEXT,
+  is_public BOOLEAN DEFAULT false,
+  recipe_count INTEGER DEFAULT 0,
+  
+  -- Timestamps
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 6. Junction table for recipes in collections
+CREATE TABLE collection_recipes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  collection_id UUID REFERENCES recipe_collections(id) ON DELETE CASCADE,
+  recipe_id UUID REFERENCES extracted_recipes(id) ON DELETE CASCADE,
+  
+  -- Position in collection for ordering
+  position INTEGER DEFAULT 0,
+  
+  -- Timestamps
+  added_at TIMESTAMP DEFAULT NOW(),
+  
+  -- Unique constraint to prevent duplicates
+  UNIQUE(collection_id, recipe_id)
+);
+
+-- ====================================
+-- PERFORMANCE INDEXES
+-- ====================================
+
+-- Indexes for social_media_content
+CREATE INDEX idx_social_content_user_id ON social_media_content(user_id);
+CREATE INDEX idx_social_content_status ON social_media_content(status);
+CREATE INDEX idx_social_content_platform ON social_media_content(platform);
+CREATE INDEX idx_social_content_content_type ON social_media_content(content_type);
+CREATE INDEX idx_social_content_created_at ON social_media_content(created_at DESC);
+CREATE INDEX idx_social_content_url ON social_media_content(original_url);
+
+-- Indexes for extracted_recipes
+CREATE INDEX idx_recipes_content_id ON extracted_recipes(social_media_content_id);
+CREATE INDEX idx_recipes_ingredients_gin ON extracted_recipes USING gin(ingredients);
+CREATE INDEX idx_recipes_dietary_tags_gin ON extracted_recipes USING gin(dietary_tags);
+CREATE INDEX idx_recipes_filters ON extracted_recipes(prep_time, difficulty_level, meal_type);
+CREATE INDEX idx_recipes_cuisine ON extracted_recipes(cuisine_type);
+CREATE INDEX idx_recipes_chef ON extracted_recipes(chef_attribution);
+
+-- Indexes for user_profiles
+CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
+CREATE INDEX idx_user_profiles_points ON user_profiles(points DESC);
+CREATE INDEX idx_user_profiles_level ON user_profiles(level DESC);
+
+-- Indexes for processing_jobs
+CREATE INDEX idx_processing_jobs_content_id ON processing_jobs(social_media_content_id);
+CREATE INDEX idx_processing_jobs_status ON processing_jobs(status);
+CREATE INDEX idx_processing_jobs_created_at ON processing_jobs(created_at DESC);
+
+-- ====================================
+-- AUTOMATIC UPDATE TRIGGERS
+-- ====================================
+
+-- Function to update updated_at timestamp automatically
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Apply triggers to main tables
+CREATE TRIGGER update_social_media_content_updated_at 
+    BEFORE UPDATE ON social_media_content 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_extracted_recipes_updated_at 
+    BEFORE UPDATE ON extracted_recipes 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_profiles_updated_at 
+    BEFORE UPDATE ON user_profiles 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_recipe_collections_updated_at 
+    BEFORE UPDATE ON recipe_collections 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ====================================
+-- ROW LEVEL SECURITY (RLS)
+-- ====================================
+
+-- Enable RLS on all user-related tables
+ALTER TABLE social_media_content ENABLE ROW LEVEL SECURITY;
+ALTER TABLE extracted_recipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE recipe_collections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE collection_recipes ENABLE ROW LEVEL SECURITY;
+
+-- Policies for social_media_content
+CREATE POLICY "users_can_view_own_content" ON social_media_content
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "users_can_insert_own_content" ON social_media_content
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "users_can_update_own_content" ON social_media_content
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "service_role_full_access_content" ON social_media_content
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- Policies for extracted_recipes
+CREATE POLICY "users_can_view_own_recipes" ON extracted_recipes
+    FOR SELECT USING (
+        social_media_content_id IN (
+            SELECT id FROM social_media_content WHERE user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "users_can_update_own_recipes" ON extracted_recipes
+    FOR UPDATE USING (
+        social_media_content_id IN (
+            SELECT id FROM social_media_content WHERE user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "service_role_full_access_recipes" ON extracted_recipes
+    FOR ALL USING (auth.role() = 'service_role');
+
+-- Policies for user_profiles
+CREATE POLICY "users_can_manage_own_profile" ON user_profiles
+    FOR ALL USING (auth.uid() = user_id);
+
+-- Policies for recipe_collections
+CREATE POLICY "users_can_manage_own_collections" ON recipe_collections
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "users_can_view_public_collections" ON recipe_collections
+    FOR SELECT USING (is_public = true OR auth.uid() = user_id);
+
+-- Policies for collection_recipes
+CREATE POLICY "users_can_manage_own_collection_recipes" ON collection_recipes
+    FOR ALL USING (
+        collection_id IN (
+            SELECT id FROM recipe_collections WHERE user_id = auth.uid()
+        )
+    );
+
+-- ====================================
+-- UTILITY FUNCTIONS FOR N8N AUTOMATION
+-- ====================================
+
+-- Function to detect platform and content type from URL
+CREATE OR REPLACE FUNCTION detect_content_info(url VARCHAR)
+RETURNS TABLE (
+    platform VARCHAR,
+    content_type VARCHAR,
+    is_valid BOOLEAN
+) AS $$
+BEGIN
+    -- TikTok detection
+    IF url ~* 'tiktok\.com' THEN
+        RETURN QUERY SELECT 'tiktok'::VARCHAR, 'video'::VARCHAR, true::BOOLEAN;
+    
+    -- Instagram detection
+    ELSIF url ~* 'instagram\.com' THEN
+        IF url ~* '/reel/' THEN
+            RETURN QUERY SELECT 'instagram'::VARCHAR, 'reel'::VARCHAR, true::BOOLEAN;
+        ELSIF url ~* '/p/' THEN
+            RETURN QUERY SELECT 'instagram'::VARCHAR, 'post'::VARCHAR, true::BOOLEAN;
+        ELSIF url ~* '/stories/' THEN
+            RETURN QUERY SELECT 'instagram'::VARCHAR, 'story'::VARCHAR, true::BOOLEAN;
+        ELSE
+            RETURN QUERY SELECT 'instagram'::VARCHAR, 'post'::VARCHAR, true::BOOLEAN;
+        END IF;
+    
+    -- YouTube detection
+    ELSIF url ~* 'youtube\.com|youtu\.be' THEN
+        RETURN QUERY SELECT 'youtube'::VARCHAR, 'video'::VARCHAR, true::BOOLEAN;
+    
+    -- Pinterest detection
+    ELSIF url ~* 'pinterest\.com' THEN
+        RETURN QUERY SELECT 'pinterest'::VARCHAR, 'image'::VARCHAR, true::BOOLEAN;
+    
+    -- Facebook detection
+    ELSIF url ~* 'facebook\.com' THEN
+        RETURN QUERY SELECT 'facebook'::VARCHAR, 'post'::VARCHAR, true::BOOLEAN;
+    
+    -- Twitter/X detection
+    ELSIF url ~* 'twitter\.com|x\.com' THEN
+        RETURN QUERY SELECT 'twitter'::VARCHAR, 'post'::VARCHAR, true::BOOLEAN;
+    
+    -- Unsupported URL
+    ELSE
+        RETURN QUERY SELECT 'unknown'::VARCHAR, 'unknown'::VARCHAR, false::BOOLEAN;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to get user's recipes with complete information
+CREATE OR REPLACE FUNCTION get_user_recipes(user_uuid UUID, limit_count INTEGER DEFAULT 50)
+RETURNS TABLE (
+    content_id UUID,
+    content_title TEXT,
+    content_url VARCHAR,
+    original_url VARCHAR,
+    platform VARCHAR,
+    content_type VARCHAR,
+    recipe_id UUID,
+    recipe_title VARCHAR,
+    description TEXT,
+    ingredients JSONB,
+    instructions JSONB,
+    prep_time INTEGER,
+    cook_time INTEGER,
+    total_time INTEGER,
+    servings INTEGER,
+    difficulty_level VARCHAR,
+    cuisine_type VARCHAR,
+    meal_type VARCHAR,
+    dietary_tags JSONB,
+    chef_attribution VARCHAR,
+    ai_confidence_score DECIMAL,
+    created_at TIMESTAMP
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        smc.id,
+        smc.title,
+        smc.public_url,
+        smc.original_url,
+        smc.platform,
+        smc.content_type,
+        er.id,
+        er.recipe_title,
+        er.description,
+        er.ingredients,
+        er.instructions,
+        er.prep_time,
+        er.cook_time,
+        er.total_time,
+        er.servings,
+        er.difficulty_level,
+        er.cuisine_type,
+        er.meal_type,
+        er.dietary_tags,
+        er.chef_attribution,
+        er.ai_confidence_score,
+        smc.created_at
+    FROM social_media_content smc
+    JOIN extracted_recipes er ON smc.id = er.social_media_content_id
+    WHERE smc.user_id = user_uuid
+        AND smc.status = 'completed'
+        AND er.status = 'published'
+    ORDER BY smc.created_at DESC
+    LIMIT limit_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function for recipe roulette with filters
+CREATE OR REPLACE FUNCTION get_random_recipe(
+    user_uuid UUID,
+    max_prep_time INTEGER DEFAULT NULL,
+    difficulty VARCHAR DEFAULT NULL,
+    meal_type_filter VARCHAR DEFAULT NULL,
+    dietary_tags_filter JSONB DEFAULT NULL,
+    platform_filter VARCHAR DEFAULT NULL,
+    cuisine_filter VARCHAR DEFAULT NULL
+)
+RETURNS TABLE (
+    recipe_id UUID,
+    recipe_title VARCHAR,
+    description TEXT,
+    ingredients JSONB,
+    instructions JSONB,
+    prep_time INTEGER,
+    cook_time INTEGER,
+    total_time INTEGER,
+    difficulty_level VARCHAR,
+    cuisine_type VARCHAR,
+    meal_type VARCHAR,
+    content_url VARCHAR,
+    platform VARCHAR,
+    chef_attribution VARCHAR
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        er.id,
+        er.recipe_title,
+        er.description,
+        er.ingredients,
+        er.instructions,
+        er.prep_time,
+        er.cook_time,
+        er.total_time,
+        er.difficulty_level,
+        er.cuisine_type,
+        er.meal_type,
+        smc.public_url,
+        smc.platform,
+        er.chef_attribution
+    FROM extracted_recipes er
+    JOIN social_media_content smc ON er.social_media_content_id = smc.id
+    WHERE smc.user_id = user_uuid
+        AND smc.status = 'completed'
+        AND er.status = 'published'
+        AND (max_prep_time IS NULL OR er.prep_time <= max_prep_time)
+        AND (difficulty IS NULL OR er.difficulty_level = difficulty)
+        AND (meal_type_filter IS NULL OR er.meal_type = meal_type_filter)
+        AND (dietary_tags_filter IS NULL OR er.dietary_tags @> dietary_tags_filter)
+        AND (platform_filter IS NULL OR smc.platform = platform_filter)
+        AND (cuisine_filter IS NULL OR er.cuisine_type = cuisine_filter)
+    ORDER BY RANDOM()
+    LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to update user stats after recipe creation
+CREATE OR REPLACE FUNCTION update_user_stats_after_recipe()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Update user profile stats
+    INSERT INTO user_profiles (user_id, recipes_count, points)
+    SELECT 
+        smc.user_id,
+        1,
+        10 -- points for adding a recipe
+    FROM social_media_content smc
+    WHERE smc.id = NEW.social_media_content_id
+    ON CONFLICT (user_id) DO UPDATE SET
+        recipes_count = user_profiles.recipes_count + 1,
+        points = user_profiles.points + 10,
+        updated_at = NOW();
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to automatically update user stats when recipe is created
+CREATE TRIGGER update_user_stats_on_recipe_insert
+    AFTER INSERT ON extracted_recipes
+    FOR EACH ROW
+    EXECUTE FUNCTION update_user_stats_after_recipe();
+
+-- ====================================
+-- SAMPLE DATA (OPTIONAL - FOR TESTING)
+-- ====================================
+
+-- Uncomment below to insert test data
+/*
+-- Sample social media content
+INSERT INTO social_media_content (original_url, platform, content_type, recipe_name, user_id, status) VALUES
+('https://www.tiktok.com/@chef/video/123', 'tiktok', 'video', 'Test TikTok Recipe', auth.uid(), 'pending'),
+('https://www.instagram.com/p/test123/', 'instagram', 'post', 'Test Instagram Recipe', auth.uid(), 'pending'),
+('https://www.youtube.com/watch?v=test123', 'youtube', 'video', 'Test YouTube Recipe', auth.uid(), 'pending');
+
+-- Sample user profile
+INSERT INTO user_profiles (user_id, display_name, cooking_skill_level) VALUES
+(auth.uid(), 'Test Chef', 'beginner');
+*/
