@@ -22,6 +22,11 @@ export function generateDatabaseUrl(password?: string): string {
   return `postgresql://postgres:${dbPassword}@db.ctbcdiedhsaqibcvcdmd.supabase.co:5432/postgres`;
 }
 
+// Check if we're using the correct Supabase URL
+export function isSupabaseConnection(url: string): boolean {
+  return url.includes('ctbcdiedhsaqibcvcdmd.supabase.co');
+}
+
 // Instructions for user
 export const setupInstructions = `
 To complete the Supabase setup:

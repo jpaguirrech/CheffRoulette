@@ -12,16 +12,18 @@ Your Supabase project is already configured with these details:
 
 To connect the app to your Supabase database, you need to provide your database password:
 
-### Option 1: Set DATABASE_URL (Recommended)
+### Option 1: Set SUPABASE_DATABASE_URL (Recommended)
 
 1. Go to your Supabase dashboard: https://ctbcdiedhsaqibcvcdmd.supabase.co
 2. Navigate to **Settings** > **Database**
 3. Find your database password (the one you created when setting up the project)
 4. In Replit, go to the **Secrets** tab
 5. Add a new secret:
-   - **Key**: `DATABASE_URL`
+   - **Key**: `SUPABASE_DATABASE_URL`
    - **Value**: `postgresql://postgres:YOUR_PASSWORD@db.ctbcdiedhsaqibcvcdmd.supabase.co:5432/postgres`
    - Replace `YOUR_PASSWORD` with your actual database password
+
+**Note**: We use `SUPABASE_DATABASE_URL` instead of `DATABASE_URL` because Replit may have its own `DATABASE_URL` pointing to a Neon database.
 
 ### Option 2: Set Password Only
 

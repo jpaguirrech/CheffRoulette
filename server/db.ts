@@ -3,12 +3,18 @@ import { neon } from '@neondatabase/serverless';
 import * as schema from '@shared/schema';
 import { generateDatabaseUrl } from './supabase-config';
 
-// Use Supabase connection string format
-const connectionString = process.env.DATABASE_URL || generateDatabaseUrl();
+// Force use of Supabase database URL
+const supabaseUrl = generateDatabaseUrl();
+const connectionString = process.env.SUPABASE_DATABASE_URL || supabaseUrl;
 
-console.log('Database connection configured for Supabase');
+console.log('🔗 Connecting to Supabase database...');
+console.log('📍 Project: https://ctbcdiedhsaqibcvcdmd.supabase.co');
+
 if (connectionString.includes('[YOUR-PASSWORD]')) {
-  console.warn('⚠️  DATABASE_URL contains placeholder password. Please set the DATABASE_URL environment variable with your actual Supabase database password.');
+  console.warn('⚠️  Please set SUPABASE_DATABASE_URL with your actual database password:');
+  console.warn('   SUPABASE_DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@db.ctbcdiedhsaqibcvcdmd.supabase.co:5432/postgres');
+} else {
+  console.log('✅ Supabase database connection configured');
 }
 
 const sql = neon(connectionString);
