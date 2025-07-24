@@ -1,10 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./postgres-storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertRecipeSchema, insertUserRecipeActionSchema } from "@shared/schema";
 import { z } from "zod";
-import { analyzeRecipeFromText, analyzeRecipeFromImage, analyzeRecipeFromVideo, convertAnalysisToInsertRecipe, getPlatformFromUrl } from "./ai-service";
+import { captureRecipeFromURL, getUserRecipes, getRecipeDetails, getRandomRecipe } from "./new-routes";
 
 const recipeFiltersSchema = z.object({
   cuisine: z.string().optional(),
@@ -258,32 +258,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get recipes with filters
-  app.get("/api/recipes", async (req, res) => {
-    try {
-      const filters = recipeFiltersSchema.parse(req.query);
-      const recipes = await storage.getRecipes(undefined, filters);
-      res.json(recipes);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid filters" });
-    }
-  });
+  // Get user's extracted recipes
+  app.get("/api/recipes", isAuthenticated, getUserRecipes);
 
-  // Get recipe by ID
-  app.get("/api/recipes/:id", async (req, res) => {
-    try {
-      const recipeId = parseInt(req.params.id);
-      const recipe = await storage.getRecipe(recipeId);
-      
-      if (!recipe) {
-        return res.status(404).json({ message: "Recipe not found" });
-      }
-      
-      res.json(recipe);
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+  // Get single recipe details
+  app.get("/api/recipes/:id", isAuthenticated, getRecipeDetails);
 
   // Create new recipe
   app.post("/api/recipes", async (req, res) => {
@@ -314,20 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get random recipe for roulette
-  app.get("/api/recipes/random", async (req, res) => {
-    try {
-      const filters = recipeFiltersSchema.parse(req.query);
-      const recipe = await storage.getRandomRecipe(filters);
-      
-      if (!recipe) {
-        return res.status(404).json({ message: "No recipes found with these filters" });
-      }
-      
-      res.json(recipe);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid filters" });
-    }
-  });
+  app.get("/api/recipes/random", isAuthenticated, getRandomRecipe);
 
   // Record user action (like, bookmark, cook, share)
   app.post("/api/user-actions", async (req, res) => {
@@ -383,25 +349,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Capture recipe from URL with AI-powered parsing
-  app.post("/api/recipes/capture", isAuthenticated, async (req: any, res) => {
-    try {
-      const { url } = z.object({ url: z.string().url() }).parse(req.body);
-      const userId = req.user.claims.sub;
-      
-      // Use Gemini AI to analyze and parse the recipe from the URL
-      const parsedRecipe = await parseRecipeFromUrl(url);
-      
-      // Convert the AI analysis to a recipe format for storage
-      const recipeData = convertAnalysisToInsertRecipe(parsedRecipe, userId);
-      
-      const recipe = await storage.createRecipe(recipeData);
-      res.status(201).json(recipe);
-    } catch (error) {
-      console.error("Recipe capture error:", error);
-      res.status(400).json({ message: "Unable to capture recipe from this URL" });
-    }
-  });
+  // Capture recipe from URL using external API service
+  app.post("/api/recipes/capture", isAuthenticated, captureRecipeFromURL);
 
   // Subscribe to Pro
   app.post("/api/subscribe", async (req, res) => {

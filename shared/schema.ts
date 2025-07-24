@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, varchar, index, uuid, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -33,6 +33,42 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Social media content table - matches new API structure
+export const socialMediaContent = pgTable("social_media_content", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").notNull(),
+  originalUrl: varchar("original_url").notNull(),
+  platform: varchar("platform").notNull(), // tiktok, instagram, youtube, etc.
+  contentType: varchar("content_type").notNull(), // video, image, post, reel
+  title: text("title"),
+  status: varchar("status").notNull().default("pending"), // pending, processing, completed, error
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
+// Extracted recipes table - matches new API structure
+export const extractedRecipes = pgTable("extracted_recipes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  socialMediaContentId: uuid("social_media_content_id").notNull(),
+  recipeTitle: varchar("recipe_title").notNull(),
+  description: text("description"),
+  ingredients: jsonb("ingredients").notNull(), // Array of {name, amount, unit}
+  instructions: jsonb("instructions").notNull(), // Array of {step, description}
+  prepTime: integer("prep_time"), // minutes
+  cookTime: integer("cook_time"), // minutes
+  totalTime: integer("total_time"), // minutes
+  servings: integer("servings"),
+  difficultyLevel: varchar("difficulty_level"), // easy, medium, hard
+  cuisineType: varchar("cuisine_type"),
+  mealType: varchar("meal_type"), // breakfast, lunch, dinner, snack, dessert
+  dietaryTags: jsonb("dietary_tags").default([]), // Array of strings
+  chefAttribution: varchar("chef_attribution"),
+  aiConfidenceScore: decimal("ai_confidence_score", { precision: 3, scale: 2 }),
+  status: varchar("status").notNull().default("published"), // draft, published, archived
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Legacy recipes table - keeping for backwards compatibility
 export const recipes = pgTable("recipes", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
@@ -93,6 +129,19 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+// New schema types for the API structure
+export const insertSocialMediaContentSchema = createInsertSchema(socialMediaContent).omit({
+  id: true,
+  createdAt: true,
+  processedAt: true,
+});
+
+export const insertExtractedRecipeSchema = createInsertSchema(extractedRecipes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Legacy recipe schema
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
   likes: true,
@@ -118,6 +167,14 @@ export const insertUserRecipeActionSchema = createInsertSchema(userRecipeActions
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
+
+// New types for API structure
+export type SocialMediaContent = typeof socialMediaContent.$inferSelect;
+export type InsertSocialMediaContent = z.infer<typeof insertSocialMediaContentSchema>;
+export type ExtractedRecipe = typeof extractedRecipes.$inferSelect;
+export type InsertExtractedRecipe = z.infer<typeof insertExtractedRecipeSchema>;
+
+// Legacy types
 export type Recipe = typeof recipes.$inferSelect;
 export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
 export type Challenge = typeof challenges.$inferSelect;

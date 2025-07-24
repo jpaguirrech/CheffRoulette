@@ -1,8 +1,11 @@
 import { 
   users, recipes, challenges, userChallenges, userRecipeActions,
+  socialMediaContent, extractedRecipes,
   type User, type InsertUser, type Recipe, type InsertRecipe, 
   type Challenge, type InsertChallenge, type UserChallenge, type InsertUserChallenge,
-  type UserRecipeAction, type InsertUserRecipeAction
+  type UserRecipeAction, type InsertUserRecipeAction,
+  type SocialMediaContent, type InsertSocialMediaContent,
+  type ExtractedRecipe, type InsertExtractedRecipe
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -18,9 +21,22 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   
-  // Recipe operations
+  // Social Media Content operations (NEW)
+  createSocialMediaContent(content: InsertSocialMediaContent): Promise<SocialMediaContent>;
+  getSocialMediaContent(id: string): Promise<SocialMediaContent | undefined>;
+  getUserSocialMediaContent(userId: string): Promise<SocialMediaContent[]>;
+  updateSocialMediaContentStatus(id: string, status: string, processedAt?: Date): Promise<SocialMediaContent | undefined>;
+  
+  // Extracted Recipe operations (NEW)
+  createExtractedRecipe(recipe: InsertExtractedRecipe): Promise<ExtractedRecipe>;
+  getExtractedRecipe(id: string): Promise<ExtractedRecipe | undefined>;
+  getExtractedRecipeByContentId(contentId: string): Promise<ExtractedRecipe | undefined>;
+  getUserExtractedRecipes(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe[]>;
+  getRandomExtractedRecipe(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe | undefined>;
+  
+  // Legacy Recipe operations
   getRecipe(id: number): Promise<Recipe | undefined>;
-  getRecipes(userId?: number, filters?: RecipeFilters): Promise<Recipe[]>;
+  getRecipes(userId?: string, filters?: RecipeFilters): Promise<Recipe[]>;
   createRecipe(recipe: InsertRecipe): Promise<Recipe>;
   updateRecipe(id: number, updates: Partial<Recipe>): Promise<Recipe | undefined>;
   deleteRecipe(id: number): Promise<boolean>;
@@ -28,12 +44,12 @@ export interface IStorage {
   
   // Challenge operations
   getChallenges(): Promise<Challenge[]>;
-  getActiveUserChallenges(userId: number): Promise<UserChallenge[]>;
-  updateUserChallengeProgress(userId: number, challengeId: number, progress: number): Promise<UserChallenge | undefined>;
+  getActiveUserChallenges(userId: string): Promise<UserChallenge[]>;
+  updateUserChallengeProgress(userId: string, challengeId: number, progress: number): Promise<UserChallenge | undefined>;
   
   // User actions
   recordUserAction(action: InsertUserRecipeAction): Promise<UserRecipeAction>;
-  getUserActions(userId: number, recipeId?: number): Promise<UserRecipeAction[]>;
+  getUserActions(userId: string, recipeId?: number): Promise<UserRecipeAction[]>;
 }
 
 export interface RecipeFilters {
@@ -43,6 +59,15 @@ export interface RecipeFilters {
   cookTime?: number; // max cook time
   dietaryTags?: string[];
   hasIngredients?: string[];
+}
+
+export interface ExtractedRecipeFilters {
+  cuisineType?: string;
+  difficultyLevel?: string;
+  mealType?: string;
+  maxPrepTime?: number;
+  maxCookTime?: number;
+  dietaryTags?: string[];
 }
 
 export class MemStorage implements IStorage {

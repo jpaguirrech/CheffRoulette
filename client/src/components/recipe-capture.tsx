@@ -18,18 +18,26 @@ export default function RecipeCapture() {
         url
       });
     },
-    onSuccess: () => {
-      toast({
-        title: "Recipe captured!",
-        description: "Your recipe has been added to your collection.",
-      });
-      setUrl("");
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+    onSuccess: (response: any) => {
+      if (response.success) {
+        toast({
+          title: "Recipe captured!",
+          description: `${response.data.title} has been added to your collection.`,
+        });
+        setUrl("");
+        queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      } else {
+        toast({
+          title: "Capture failed",
+          description: response.error || "Unable to capture recipe.",
+          variant: "destructive",
+        });
+      }
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Capture failed",
-        description: "Unable to capture recipe. Please check the URL and try again.",
+        description: error.message || "Unable to capture recipe. Please check the URL and try again.",
         variant: "destructive",
       });
     },

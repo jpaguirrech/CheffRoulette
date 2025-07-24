@@ -28,16 +28,18 @@ export default function Dashboard() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const { data: user, isLoading: userLoading } = useQuery<User>({
-    queryKey: ["/api/user/1"],
+    queryKey: ["/api/auth/user"],
   });
 
-  const { data: recipes, isLoading: recipesLoading } = useQuery<Recipe[]>({
+  const { data: recipesResponse, isLoading: recipesLoading } = useQuery<{success: boolean, data: any[]}>({
     queryKey: ["/api/recipes"],
   });
 
   const { data: challenges, isLoading: challengesLoading } = useQuery({
     queryKey: ["/api/user/1/challenges"],
   });
+
+  const recipes = recipesResponse?.data || [];
 
   const filteredRecipes = recipes?.filter(recipe => {
     if (filters.cuisine && recipe.cuisine !== filters.cuisine) return false;

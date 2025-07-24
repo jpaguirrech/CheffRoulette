@@ -22,17 +22,14 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: randomRecipe, refetch } = useQuery<Recipe>({
+  const { data: randomRecipeResponse, refetch } = useQuery<{success: boolean, data: any}>({
     queryKey: ["/api/recipes/random", filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.cuisine) params.append("cuisine", filters.cuisine);
-      if (filters?.difficulty) params.append("difficulty", filters.difficulty);
-      if (filters?.category) params.append("category", filters.category);
-      if (filters?.cookTime) params.append("cookTime", filters.cookTime.toString());
-      if (filters?.dietaryTags) {
-        filters.dietaryTags.forEach(tag => params.append("dietaryTags", tag));
-      }
+      if (filters?.cuisine) params.append("cuisineType", filters.cuisine);
+      if (filters?.difficulty) params.append("difficultyLevel", filters.difficulty);
+      if (filters?.category) params.append("mealType", filters.category);
+      if (filters?.cookTime) params.append("maxCookTime", filters.cookTime.toString());
       
       const response = await fetch(`/api/recipes/random?${params}`);
       if (!response.ok) {
@@ -49,14 +46,14 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
     
     try {
       const result = await refetch();
-      if (result.data) {
+      if (result.data?.success && result.data.data) {
         // Simulate spinning animation
         setTimeout(() => {
-          setSelectedRecipe(result.data);
+          setSelectedRecipe(result.data.data);
           setIsSpinning(false);
           toast({
             title: "Recipe Selected!",
-            description: `You got: ${result.data.title}`,
+            description: `You got: ${result.data.data.title}`,
           });
         }, 2000);
       }
