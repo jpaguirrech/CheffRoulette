@@ -3,9 +3,8 @@ import { neon } from '@neondatabase/serverless';
 import * as schema from '@shared/schema';
 import { generateDatabaseUrl } from './supabase-config';
 
-// Force use of Supabase database URL
-const supabaseUrl = generateDatabaseUrl();
-const connectionString = process.env.SUPABASE_DATABASE_URL || supabaseUrl;
+// Force use of Supabase database URL - prioritize SUPABASE_DATABASE_URL
+const connectionString = process.env.SUPABASE_DATABASE_URL || generateDatabaseUrl();
 
 console.log('🔗 Connecting to Supabase database...');
 console.log('📍 Project: https://ctbcdiedhsaqibcvcdmd.supabase.co');
