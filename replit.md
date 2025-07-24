@@ -150,6 +150,10 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - July 10, 2025: Successfully integrated Google AI video understanding API for YouTube video analysis
 - July 10, 2025: Added comprehensive recipe analysis system with AI-powered content extraction
 - July 10, 2025: Implemented intelligent fallback recipes based on URL analysis and platform detection
+- July 24, 2025: Integrated external Chef Roulette API service at flw.panteragpt.com/webhook/social-media-recipe
+- July 24, 2025: Migrated from internal AI processing to external API for recipe extraction
+- July 24, 2025: Created new database schema with social_media_content and extracted_recipes tables
+- July 24, 2025: Configured Supabase database integration with setup documentation
 
 ## Application Flow
 
