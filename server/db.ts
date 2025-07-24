@@ -9,6 +9,8 @@ const connectionString = process.env.SUPABASE_DATABASE_URL || generateDatabaseUr
 console.log('🔗 Connecting to Supabase database...');
 console.log('📍 Project: https://ctbcdiedhsaqibcvcdmd.supabase.co');
 console.log('🔌 Connection string:', connectionString.replace(/:[^:@]*@/, ':****@'));
+console.log('🔍 Using SUPABASE_DATABASE_URL:', !!process.env.SUPABASE_DATABASE_URL);
+console.log('🔍 Raw env check:', process.env.SUPABASE_DATABASE_URL ? 'SET' : 'NOT_SET');
 
 if (connectionString.includes('[YOUR-PASSWORD]')) {
   console.warn('⚠️  Please set SUPABASE_DATABASE_URL with your actual database password:');
