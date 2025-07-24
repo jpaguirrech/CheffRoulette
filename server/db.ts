@@ -1,5 +1,5 @@
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from '@shared/schema';
 import { generateDatabaseUrl } from './supabase-config';
 
@@ -8,6 +8,7 @@ const connectionString = process.env.SUPABASE_DATABASE_URL || generateDatabaseUr
 
 console.log('🔗 Connecting to Supabase database...');
 console.log('📍 Project: https://ctbcdiedhsaqibcvcdmd.supabase.co');
+console.log('🔌 Connection string:', connectionString.replace(/:[^:@]*@/, ':****@'));
 
 if (connectionString.includes('[YOUR-PASSWORD]')) {
   console.warn('⚠️  Please set SUPABASE_DATABASE_URL with your actual database password:');
@@ -16,5 +17,14 @@ if (connectionString.includes('[YOUR-PASSWORD]')) {
   console.log('✅ Supabase database connection configured');
 }
 
-const sql = neon(connectionString);
-export const db = drizzle(sql, { schema });
+// Create postgres connection for Supabase
+const client = postgres(connectionString, {
+  ssl: 'require',
+  max: 10,
+  idle_timeout: 30,
+  transform: {
+    undefined: null
+  }
+});
+
+export const db = drizzle(client, { schema });

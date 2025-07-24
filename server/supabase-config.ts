@@ -19,7 +19,8 @@ export const supabaseConfig: Partial<SupabaseConfig> = {
 // Generate the DATABASE_URL connection string
 export function generateDatabaseUrl(password?: string): string {
   const dbPassword = password || process.env.SUPABASE_DB_PASSWORD || '[YOUR-PASSWORD]';
-  return `postgresql://postgres:${dbPassword}@db.ctbcdiedhsaqibcvcdmd.supabase.co:5432/postgres`;
+  // Try the pooler connection string format first for better connectivity
+  return `postgresql://postgres.ctbcdiedhsaqibcvcdmd:${dbPassword}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`;
 }
 
 // Check if we're using the correct Supabase URL
