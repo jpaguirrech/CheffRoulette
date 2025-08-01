@@ -424,7 +424,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             webhookResult.recipe_title !== 'Recipe Not Found') {
           try {
             // Import the neon route function
-            const { getRecipeById } = await import('./neon-routes');
+            const neonRoutes = await import('./neon-routes');
+            const getRecipeById = neonRoutes.getRecipeById;
             
             // Fetch full recipe details from database
             const recipeDetails = await getRecipeById(webhookResult.recipe_id);

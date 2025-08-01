@@ -27,7 +27,8 @@ const webhookObjectResponseSchema = z.object({
 });
 
 export type WebhookRequest = z.infer<typeof webhookRequestSchema>;
-export type WebhookResponse = z.infer<typeof webhookResponseSchema>;
+export type WebhookArrayResponse = z.infer<typeof webhookArrayResponseSchema>;
+export type WebhookObjectResponse = z.infer<typeof webhookObjectResponseSchema>;
 
 export class WebhookRecipeService {
   /**

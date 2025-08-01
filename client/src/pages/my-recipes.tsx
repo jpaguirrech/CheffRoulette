@@ -38,7 +38,8 @@ export default function MyRecipes() {
     );
   }
 
-  const userRecipes = recipes?.filter(recipe => recipe.userId === 1) || [];
+  // In development, show all recipes since we have a mock user
+  const userRecipes = recipes || [];
 
   return (
     <div className="container mx-auto px-4 py-8">

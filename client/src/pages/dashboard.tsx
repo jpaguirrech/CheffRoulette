@@ -31,15 +31,13 @@ export default function Dashboard() {
     queryKey: ["/api/auth/user"],
   });
 
-  const { data: recipesResponse, isLoading: recipesLoading } = useQuery<{success: boolean, data: any[]}>({
+  const { data: recipes, isLoading: recipesLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
 
   const { data: challenges, isLoading: challengesLoading } = useQuery({
     queryKey: ["/api/user/1/challenges"],
   });
-
-  const recipes = recipesResponse?.data || [];
 
   const filteredRecipes = recipes?.filter(recipe => {
     if (filters.cuisine && recipe.cuisine !== filters.cuisine) return false;
