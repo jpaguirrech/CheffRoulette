@@ -131,7 +131,7 @@ export async function setupAuth(app: Express) {
           res.redirect('/dashboard');
         });
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Development auth error:', error);
         res.status(500).json({ error: 'Authentication failed' });
       }
