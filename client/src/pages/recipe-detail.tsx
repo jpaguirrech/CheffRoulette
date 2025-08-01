@@ -188,7 +188,12 @@ export default function RecipeDetail() {
                   {recipe.ingredients.map((ingredient, index) => (
                     <li key={index} className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-[hsl(14,100%,60%)] rounded-full" />
-                      <span>{ingredient}</span>
+                      <span>
+                        {typeof ingredient === 'string' 
+                          ? ingredient 
+                          : `${ingredient.amount || ''} ${ingredient.unit || ''} ${ingredient.name || ''}`
+                        }
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -206,7 +211,12 @@ export default function RecipeDetail() {
                       <div className="flex-shrink-0 w-6 h-6 bg-[hsl(14,100%,60%)] text-white rounded-full flex items-center justify-center text-sm font-medium">
                         {index + 1}
                       </div>
-                      <p className="text-gray-700 leading-relaxed">{instruction}</p>
+                      <p className="text-gray-700 leading-relaxed">
+                        {typeof instruction === 'string' 
+                          ? instruction 
+                          : instruction.description || instruction
+                        }
+                      </p>
                     </li>
                   ))}
                 </ol>
