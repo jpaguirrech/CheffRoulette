@@ -22,9 +22,9 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
     
     console.log(`✅ Found ${recipes.length} extracted recipes for user ${userId}`);
     
-    // Remove duplicates based on recipe ID
+    // Remove duplicates based on recipe title (more comprehensive than ID)
     const uniqueRecipes = recipes.filter((recipe, index, self) => 
-      index === self.findIndex(r => r.extracted_recipes?.id === recipe.extracted_recipes?.id)
+      index === self.findIndex(r => r.extracted_recipes?.recipeTitle === recipe.extracted_recipes?.recipeTitle)
     );
     
     console.log(`🔍 Filtered ${recipes.length} total to ${uniqueRecipes.length} unique recipes`);
