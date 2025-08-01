@@ -22,7 +22,7 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: randomRecipeResponse, refetch } = useQuery<{success: boolean, data: any}>({
+  const { data: randomRecipe, refetch } = useQuery<Recipe>({
     queryKey: ["/api/recipes/random", filters],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -46,14 +46,14 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
     
     try {
       const result = await refetch();
-      if (result.data?.success && result.data.data) {
+      if (result.data) {
         // Simulate spinning animation
         setTimeout(() => {
-          setSelectedRecipe(result.data.data);
+          setSelectedRecipe(result.data);
           setIsSpinning(false);
           toast({
             title: "Recipe Selected!",
-            description: `You got: ${result.data.data.title}`,
+            description: `You got: ${result.data.title}`,
           });
         }, 2000);
       }

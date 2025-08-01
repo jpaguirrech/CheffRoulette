@@ -168,54 +168,75 @@ export async function getExtractedRecipeDetails(req: any, res: Response) {
 }
 
 /**
- * Get a random recipe for the roulette feature
+ * Get a random recipe for the roulette feature from user's library
  */
 export async function getRandomExtractedRecipe(req: any, res: Response) {
   try {
-    const userId = req.user.claims.sub;
+    // For development, use dev user ID
+    let userId = req.user?.claims?.sub;
+    if (!userId) {
+      userId = 'dev-user-123'; // Default development user
+    }
     
     console.log(`🎲 Getting random recipe for user: ${userId}`);
     
-    // Get all published recipes and pick one randomly
+    // Get all user's recipes
     const recipes = await db
       .select({
-        id: extractedRecipes.id,
-        title: extractedRecipes.recipeTitle,
-        description: extractedRecipes.description,
-        difficulty: extractedRecipes.difficultyLevel,
-        cuisine: extractedRecipes.cuisineType,
-        prepTime: extractedRecipes.prepTime,
-        cookTime: extractedRecipes.cookTime,
-        platform: socialMediaContent.platform,
-        author: socialMediaContent.author
+        extracted_recipes: extractedRecipes,
+        social_media_content: socialMediaContent
       })
       .from(extractedRecipes)
       .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
-      .where(eq(extractedRecipes.status, 'published'))
-      .limit(50); // Get a reasonable sample
+      .where(eq(socialMediaContent.userId, userId))
+      .orderBy(desc(extractedRecipes.createdAt));
     
     if (recipes.length === 0) {
-      return res.status(404).json({ message: 'No recipes available for roulette' });
+      return res.status(404).json({ message: 'No recipes available in your library for roulette' });
+    }
+    
+    // Filter out duplicates based on recipe title
+    const uniqueRecipes = recipes.filter((recipe, index, self) => 
+      index === self.findIndex(r => r.extracted_recipes?.recipeTitle === recipe.extracted_recipes?.recipeTitle)
+    );
+    
+    if (uniqueRecipes.length === 0) {
+      return res.status(404).json({ message: 'No unique recipes available for roulette' });
     }
     
     // Pick a random recipe
-    const randomIndex = Math.floor(Math.random() * recipes.length);
-    const randomRecipe = recipes[randomIndex];
+    const randomIndex = Math.floor(Math.random() * uniqueRecipes.length);
+    const selectedRecipe = uniqueRecipes[randomIndex];
+    const recipe = selectedRecipe.extracted_recipes;
+    const social = selectedRecipe.social_media_content;
     
-    console.log(`🎯 Selected random recipe: ${randomRecipe.title}`);
+    console.log(`🎯 Selected random recipe: ${recipe.recipeTitle}`);
     
-    res.json({
-      id: randomRecipe.id,
-      title: randomRecipe.title,
-      description: randomRecipe.description,
-      difficulty: randomRecipe.difficulty || 'medium',
-      cuisine: randomRecipe.cuisine || 'International',
-      prepTime: randomRecipe.prepTime || 0,
-      cookTime: randomRecipe.cookTime || 0,
-      platform: randomRecipe.platform || 'unknown',
-      username: randomRecipe.author || 'Unknown Chef',
-      imageUrl: getDefaultImageForPlatform(randomRecipe.platform || 'tiktok')
-    });
+    // Transform the data for frontend compatibility
+    const transformedRecipe = {
+      id: recipe.id,
+      title: recipe.recipeTitle,
+      description: recipe.description,
+      ingredients: recipe.ingredients || [],
+      instructions: recipe.instructions || [],
+      prepTime: recipe.prepTime || 0,
+      cookTime: recipe.cookTime || 0,
+      totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
+      servings: recipe.servings || 1,
+      difficulty: recipe.difficultyLevel || 'medium',
+      cuisine: recipe.cuisineType || 'International',
+      category: recipe.mealType || 'Main Course',
+      dietaryTags: recipe.dietaryTags || [],
+      platform: social?.platform || 'unknown',
+      originalUrl: social?.originalUrl,
+      username: social?.title || 'Unknown Chef',
+      confidence: recipe.aiConfidenceScore,
+      createdAt: recipe.createdAt,
+      imageUrl: getDefaultImageForPlatform(social?.platform || 'tiktok'),
+      rating: 0
+    };
+    
+    res.json(transformedRecipe);
     
   } catch (error) {
     console.error('❌ Error getting random recipe:', error);

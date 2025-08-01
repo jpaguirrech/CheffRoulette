@@ -299,6 +299,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's extracted recipes from Neon database
   app.get("/api/recipes", getUserExtractedRecipes);
 
+  // Get random recipe for roulette from Neon database (MUST be before /:id route)
+  app.get("/api/recipes/random", async (req: any, res) => {
+    try {
+      const neonRoutes = await import('./neon-routes');
+      await neonRoutes.getRandomExtractedRecipe(req, res);
+    } catch (error) {
+      console.error('Error in random recipe route:', error);
+      res.status(500).json({ message: 'Failed to get random recipe' });
+    }
+  });
+
   // Get single recipe details from Neon database
   app.get("/api/recipes/:id", async (req, res) => {
     try {
@@ -351,8 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get random recipe for roulette from Neon database
-  app.get("/api/recipes/random", isAuthenticated, getRandomExtractedRecipe);
+  // This route was moved above to fix ordering issue
 
   // Record user action (like, bookmark, cook, share)
   app.post("/api/user-actions", async (req, res) => {
