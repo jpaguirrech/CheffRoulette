@@ -15,62 +15,41 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
     
     // Query the extracted_recipes table with social media content
     const recipes = await db
-      .select({
-        id: extractedRecipes.id,
-        title: extractedRecipes.recipeTitle,
-        description: extractedRecipes.description,
-        ingredients: extractedRecipes.ingredients,
-        instructions: extractedRecipes.instructions,
-        prepTime: extractedRecipes.prepTime,
-        cookTime: extractedRecipes.cookTime,
-        totalTime: extractedRecipes.totalTime,
-        servings: extractedRecipes.servings,
-        difficulty: extractedRecipes.difficultyLevel,
-        cuisine: extractedRecipes.cuisineType,
-        mealType: extractedRecipes.mealType,
-        dietaryTags: extractedRecipes.dietaryTags,
-        chef: extractedRecipes.chefAttribution,
-        confidence: extractedRecipes.aiConfidenceScore,
-        createdAt: extractedRecipes.createdAt,
-        
-        // Social media content details
-        platform: socialMediaContent.platform,
-        originalUrl: socialMediaContent.originalUrl,
-        contentTitle: socialMediaContent.title,
-        author: socialMediaContent.author,
-        authorUsername: socialMediaContent.authorUsername
-      })
+      .select()
       .from(extractedRecipes)
       .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
-      // For development, get all recipes since userId might not match exactly
-      // .where(eq(socialMediaContent.userId, userId))
       .orderBy(desc(extractedRecipes.createdAt));
     
     console.log(`✅ Found ${recipes.length} extracted recipes for user ${userId}`);
     
     // Transform the data for frontend compatibility
-    const transformedRecipes = recipes.map(recipe => ({
-      id: recipe.id,
-      title: recipe.title,
-      description: recipe.description,
-      ingredients: recipe.ingredients || [],
-      instructions: recipe.instructions || [],
-      prepTime: recipe.prepTime || 0,
-      cookTime: recipe.cookTime || 0,
-      totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
-      servings: recipe.servings || 1,
-      difficulty: recipe.difficulty || 'medium',
-      cuisine: recipe.cuisine || 'International',
-      category: recipe.mealType || 'Main Course',
-      dietaryTags: recipe.dietaryTags || [],
-      platform: recipe.platform || 'unknown',
-      originalUrl: recipe.originalUrl,
-      username: recipe.authorUsername || recipe.author || 'Unknown Chef',
-      imageUrl: getDefaultImageForPlatform(recipe.platform || 'tiktok'),
-      rating: 0, // Default rating
-      confidence: recipe.confidence,
-      createdAt: recipe.createdAt
-    }));
+    const transformedRecipes = recipes.map(item => {
+      const recipe = item.extracted_recipes;
+      const social = item.social_media_content;
+      
+      return {
+        id: recipe.id,
+        title: recipe.recipeTitle,
+        description: recipe.description,
+        ingredients: recipe.ingredients || [],
+        instructions: recipe.instructions || [],
+        prepTime: recipe.prepTime || 0,
+        cookTime: recipe.cookTime || 0,
+        totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
+        servings: recipe.servings || 1,
+        difficulty: recipe.difficultyLevel || 'medium',
+        cuisine: recipe.cuisineType || 'International',
+        category: recipe.mealType || 'Main Course',
+        dietaryTags: recipe.dietaryTags || [],
+        platform: social?.platform || 'unknown',
+        originalUrl: social?.originalUrl,
+        username: social?.title || 'Unknown Chef',
+        confidence: recipe.aiConfidenceScore,
+        createdAt: recipe.createdAt,
+        imageUrl: getDefaultImageForPlatform(social?.platform || 'tiktok'),
+        rating: 0 // Default rating
+      };
+    });
     
     res.json(transformedRecipes);
     

@@ -413,25 +413,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📡 Calling external webhook for ${validation.platform} video...`);
       const result = await WebhookRecipeService.processVideoRecipe(url, userId, recipeName);
       
-      if (result.success && result.data) {
-        console.log(`✅ Recipe processing completed: ${result.data.recipe_title}`);
+      // Check if we got a valid recipe ID back
+      if (result.length > 0 && result[0].id) {
+        const webhookResult = result[0];
+        console.log(`✅ Webhook processing completed: ${webhookResult.status} - ${webhookResult.title}`);
         
-        res.json({
-          success: true,
-          data: {
-            title: result.data.recipe_title,
-            recipeId: result.data.recipe_id,
-            status: result.data.status,
-            processedAt: result.data.processed_at,
-            platform: validation.platform
+        // If recipe was successfully processed, fetch full details from database
+        if (webhookResult.status === 'completed' && webhookResult.title !== 'Recipe Not Available' && webhookResult.title !== 'Recipe Not Found') {
+          try {
+            // Import the neon route function
+            const { getRecipeById } = await import('./neon-routes');
+            
+            // Fetch full recipe details from database
+            const recipeDetails = await getRecipeById(webhookResult.id);
+            
+            if (recipeDetails) {
+              res.json({
+                success: true,
+                data: {
+                  ...recipeDetails,
+                  recipeId: webhookResult.id,
+                  status: webhookResult.status,
+                  processedAt: webhookResult.processed_at,
+                  platform: validation.platform
+                }
+              });
+            } else {
+              res.json({
+                success: true,
+                data: {
+                  title: webhookResult.title,
+                  recipeId: webhookResult.id,
+                  status: webhookResult.status,
+                  processedAt: webhookResult.processed_at,
+                  platform: validation.platform,
+                  message: 'Recipe processed successfully, but full details not yet available'
+                }
+              });
+            }
+          } catch (dbError) {
+            console.error('Error fetching recipe details:', dbError);
+            res.json({
+              success: true,
+              data: {
+                title: webhookResult.title,
+                recipeId: webhookResult.id,
+                status: webhookResult.status,
+                processedAt: webhookResult.processed_at,
+                platform: validation.platform,
+                message: 'Recipe processed successfully'
+              }
+            });
           }
-        });
+        } else {
+          // Recipe not available or not found
+          res.json({
+            success: false,
+            status: webhookResult.status,
+            message: webhookResult.title,
+            platform: validation.platform
+          });
+        }
       } else {
-        console.log(`ℹ️ Webhook response: ${result.status} - ${result.message}`);
+        console.log('❌ No valid response from webhook');
         res.json({
           success: false,
-          status: result.status,
-          message: result.message || 'Video processing completed but no recipe extracted'
+          message: 'Video processing failed - no response received'
         });
       }
       
