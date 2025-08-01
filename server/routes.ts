@@ -5,6 +5,8 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertRecipeSchema, insertUserRecipeActionSchema } from "@shared/schema";
 import { z } from "zod";
 import { captureRecipeFromURL, getUserRecipes, getRecipeDetails, getRandomRecipe } from "./new-routes";
+import { getUserExtractedRecipes, getExtractedRecipeDetails, getRandomExtractedRecipe } from "./neon-routes";
+import { WebhookRecipeService } from "./webhook-service";
 
 const recipeFiltersSchema = z.object({
   cuisine: z.string().optional(),
@@ -23,7 +25,8 @@ const subscriptionSchema = z.object({
 
 const urlCaptureSchema = z.object({
   url: z.string().url(),
-  userId: z.number(),
+  userId: z.string(), // Changed to string to match webhook API
+  recipeName: z.string().optional(),
 });
 
 function analyzeUrlForRecipeHints(url: string) {
@@ -258,11 +261,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user's extracted recipes
-  app.get("/api/recipes", isAuthenticated, getUserRecipes);
+  // Get user's extracted recipes from Neon database
+  app.get("/api/recipes", isAuthenticated, getUserExtractedRecipes);
 
-  // Get single recipe details
-  app.get("/api/recipes/:id", isAuthenticated, getRecipeDetails);
+  // Get single recipe details from Neon database
+  app.get("/api/recipes/:id", isAuthenticated, getExtractedRecipeDetails);
 
   // Create new recipe
   app.post("/api/recipes", async (req, res) => {
@@ -292,8 +295,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get random recipe for roulette
-  app.get("/api/recipes/random", isAuthenticated, getRandomRecipe);
+  // Get random recipe for roulette from Neon database
+  app.get("/api/recipes/random", isAuthenticated, getRandomExtractedRecipe);
 
   // Record user action (like, bookmark, cook, share)
   app.post("/api/user-actions", async (req, res) => {
@@ -349,8 +352,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Capture recipe from URL using external API service
-  app.post("/api/recipes/capture", isAuthenticated, captureRecipeFromURL);
+  // Capture recipe from URL using external webhook API
+  app.post("/api/recipes/capture", isAuthenticated, async (req: any, res) => {
+    try {
+      const { url, recipeName } = urlCaptureSchema.parse(req.body);
+      const userId = req.user.claims.sub; // Get user ID from auth session
+      
+      console.log(`🎬 Starting video capture for user ${userId}: ${url}`);
+      
+      // Validate URL and platform support
+      const validation = WebhookRecipeService.validateUrl(url);
+      if (!validation.isValid) {
+        return res.status(400).json({
+          success: false,
+          error: validation.error
+        });
+      }
+      
+      // Process video using external webhook API
+      console.log(`📡 Calling external webhook for ${validation.platform} video...`);
+      const result = await WebhookRecipeService.processVideoRecipe(url, userId, recipeName);
+      
+      if (result.success && result.data) {
+        console.log(`✅ Recipe extracted successfully: ${result.data.recipe_title}`);
+        
+        res.json({
+          success: true,
+          data: {
+            title: result.data.recipe_title,
+            description: result.data.description,
+            platform: result.data.platform,
+            prepTime: result.data.prep_time,
+            cookTime: result.data.cook_time,
+            totalTime: result.data.total_time,
+            servings: result.data.servings,
+            difficulty: result.data.difficulty_level,
+            cuisine: result.data.cuisine_type,
+            mealType: result.data.meal_type,
+            confidenceScore: result.data.ai_confidence_score,
+            socialMediaContentId: result.data.social_media_content_id,
+            recipeId: result.data.recipe_id,
+            processedAt: result.data.processed_at
+          }
+        });
+      } else {
+        console.error('❌ Webhook processing failed:', result.message);
+        res.status(400).json({
+          success: false,
+          error: result.message || 'Video processing failed'
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Recipe capture error:', error);
+      
+      // Handle different error types with specific messages
+      if (error.message.includes('rate limit')) {
+        res.status(429).json({
+          success: false,
+          error: 'Too many requests. Please wait before trying again.'
+        });
+      } else if (error.message.includes('Network error')) {
+        res.status(503).json({
+          success: false,
+          error: 'Video processing service is temporarily unavailable. Please try again later.'
+        });
+      } else if (error.message.includes('Invalid data format')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid URL or request format.'
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Unable to process video. Please check the URL and try again.'
+        });
+      }
+    }
+  });
 
   // Subscribe to Pro
   app.post("/api/subscribe", async (req, res) => {

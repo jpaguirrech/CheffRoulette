@@ -47,13 +47,13 @@ Chef Roulette is a modern web application that gamifies the cooking experience b
 - User-generated content integration
 
 #### AI-Powered Recipe Analysis
-- Gemini AI integration for automatic recipe extraction from social media URLs
-- Real video understanding for YouTube content using Google AI video analysis
-- Platform-specific content analysis (TikTok, Instagram, YouTube, Pinterest)
-- Intelligent ingredient and instruction parsing with fallback system
-- Automatic categorization and difficulty assessment
-- Dietary tag recognition and cuisine classification
-- Enhanced fallback recipes based on URL analysis and creator detection
+- External webhook service integration for real video processing (flw.panteragpt.com)
+- Support for TikTok, Instagram, YouTube, Pinterest, Facebook, and Twitter/X content
+- Real-time AI extraction with direct database insertion
+- Platform validation and error handling with user feedback
+- Processing status tracking with 30-60 second completion times
+- Automatic categorization, difficulty assessment, and dietary tag recognition
+- Enhanced UI with recipe name suggestions and processing indicators
 
 ## Data Flow
 
@@ -154,6 +154,10 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - July 24, 2025: Migrated from internal AI processing to external API for recipe extraction
 - July 24, 2025: Created new database schema with social_media_content and extracted_recipes tables
 - July 24, 2025: Configured Supabase database integration with setup documentation
+- January 24, 2025: Successfully migrated from Supabase to Neon PostgreSQL database
+- January 24, 2025: Integrated external webhook API for real video processing (flw.panteragpt.com)
+- January 24, 2025: Enhanced recipe capture UI with platform validation and processing status
+- January 24, 2025: Created Neon-specific routes for accessing extracted recipes from real database
 
 ## Application Flow
 

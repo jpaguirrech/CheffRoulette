@@ -1,0 +1,191 @@
+Here's the complete cURL documentation for the frontend developer:
+Webhook API Documentation
+Endpoint URL:
+POST https://flw.panteragpt.com/webhook/social-media-recipe
+cURL Command Example
+bashcurl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "content_url": "https://www.tiktok.com/@cooking.example/video/1234567890",
+    "user_id": "user_12345",
+    "recipe_name": "Delicious Pasta Recipe"
+  }' \
+  https://flw.panteragpt.com/webhook/social-media-recipe
+Request Parameters
+Required Fields:
+
+content_url (string): URL of the video from TikTok, Instagram, YouTube, etc.
+user_id (string): Unique ID of the authenticated user
+
+Optional Fields:
+
+recipe_name (string): Suggested name for the recipe (optional)
+
+Platform Examples
+TikTok Video:
+bashcurl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content_url": "https://www.tiktok.com/@chef_maria/video/7521018309056253206",
+    "user_id": "maria_123",
+    "recipe_name": "Greek Salad"
+  }' \
+  https://flw.panteragpt.com/webhook/social-media-recipe
+Instagram Reel:
+bashcurl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content_url": "https://www.instagram.com/reel/ABC123DEF456/",
+    "user_id": "user_456"
+  }' \
+  https://flw.panteragpt.com/webhook/social-media-recipe
+YouTube Video:
+bashcurl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "user_id": "chef_789",
+    "recipe_name": "Quick Pasta"
+  }' \
+  https://flw.panteragpt.com/webhook/social-media-recipe
+Expected Response
+Success Response (200 OK):
+json{
+  "success": true,
+  "status": "completed",
+  "message": "Recipe extracted successfully",
+  "data": {
+    "social_media_content_id": "e341fda1-11a4-4acd-8fd9-38716e5bb8f7",
+    "recipe_id": "3aeff802-9e84-4064-a13b-4b0ceefef44a",
+    "recipe_title": "Classic Greek Salad with Feta Block",
+    "description": "A refreshing and authentic Greek salad featuring crisp vegetables...",
+    "platform": "tiktok",
+    "content_type": "video",
+    "prep_time": 15,
+    "cook_time": 0,
+    "total_time": 15,
+    "servings": 4,
+    "difficulty_level": "easy",
+    "cuisine_type": "Greek",
+    "meal_type": "lunch",
+    "ai_confidence_score": 0.85,
+    "processed_at": "2025-08-01T02:19:53.145Z"
+  }
+}
+Error Response (400/500):
+json{
+  "success": false,
+  "status": "error",
+  "message": "Error processing recipe",
+  "error": "Unsupported platform or invalid URL format"
+}
+JavaScript Implementation
+Frontend Integration Example:
+javascriptasync function extractRecipe(contentUrl, userId, recipeName = '') {
+  try {
+    const response = await fetch('https://flw.panteragpt.com/webhook/social-media-recipe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content_url: contentUrl,
+        user_id: userId,
+        recipe_name: recipeName
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error extracting recipe:', error);
+    throw error;
+  }
+}
+
+// Usage example:
+const result = await extractRecipe(
+  'https://www.tiktok.com/@chef/video/123456789',
+  'user_12345',
+  'Amazing Pasta Recipe'
+);
+
+console.log('Recipe extracted:', result.data.recipe_title);
+React Hook Example:
+javascriptimport { useState } from 'react';
+
+export function useRecipeExtraction() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const extractRecipe = async (contentUrl, userId, recipeName = '') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('https://flw.panteragpt.com/webhook/social-media-recipe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content_url: contentUrl,
+          user_id: userId,
+          recipe_name: recipeName
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { extractRecipe, loading, error };
+}
+Supported Platforms
+
+✅ TikTok: tiktok.com
+✅ Instagram: instagram.com (posts and reels)
+✅ YouTube: youtube.com, youtu.be
+✅ Pinterest: pinterest.com
+✅ Facebook: facebook.com
+✅ Twitter/X: twitter.com, x.com
+
+Processing Time
+
+Average processing time: 30-60 seconds
+Maximum timeout: 5 minutes
+Response: Synchronous (wait for completion)
+
+Rate Limits
+
+Requests per user: 10 per hour
+Concurrent requests: 1 per user
+Content size: Max 10MB video files
+
+Error Codes
+CodeDescription400Invalid request format or missing required fields422Unsupported platform or invalid URL429Rate limit exceeded500Internal server error during processing503Service temporarily unavailable
+Testing
+Use this test URL for development:
+bashcurl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content_url": "https://www.tiktok.com/@foodiechina888/video/7504670981533797639",
+    "user_id": "test_user_123",
+    "recipe_name": "Test Recipe"
+  }' \
+  https://flw.panteragpt.com/webhook/social-media-recipe
