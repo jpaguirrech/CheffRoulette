@@ -413,26 +413,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📡 Calling external webhook for ${validation.platform} video...`);
       const result = await WebhookRecipeService.processVideoRecipe(url, userId, recipeName);
       
-      // Check if we got a valid recipe ID back
-      if (result.length > 0 && result[0].id) {
-        const webhookResult = result[0];
-        console.log(`✅ Webhook processing completed: ${webhookResult.status} - ${webhookResult.title}`);
+      // Check if we got a valid response back
+      if (result.success && result.data) {
+        const webhookResult = result.data;
+        console.log(`✅ Webhook processing completed: ${webhookResult.status} - ${webhookResult.recipe_title}`);
         
         // If recipe was successfully processed, fetch full details from database
-        if (webhookResult.status === 'completed' && webhookResult.title !== 'Recipe Not Available' && webhookResult.title !== 'Recipe Not Found') {
+        if (webhookResult.status === 'completed' && 
+            webhookResult.recipe_title !== 'Recipe Not Available' && 
+            webhookResult.recipe_title !== 'Recipe Not Found') {
           try {
             // Import the neon route function
             const { getRecipeById } = await import('./neon-routes');
             
             // Fetch full recipe details from database
-            const recipeDetails = await getRecipeById(webhookResult.id);
+            const recipeDetails = await getRecipeById(webhookResult.recipe_id);
             
             if (recipeDetails) {
+              console.log(`📋 Retrieved full recipe details: ${recipeDetails.title}`);
               res.json({
                 success: true,
                 data: {
                   ...recipeDetails,
-                  recipeId: webhookResult.id,
+                  recipeId: webhookResult.recipe_id,
                   status: webhookResult.status,
                   processedAt: webhookResult.processed_at,
                   platform: validation.platform
@@ -442,8 +445,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               res.json({
                 success: true,
                 data: {
-                  title: webhookResult.title,
-                  recipeId: webhookResult.id,
+                  title: webhookResult.recipe_title,
+                  recipeId: webhookResult.recipe_id,
                   status: webhookResult.status,
                   processedAt: webhookResult.processed_at,
                   platform: validation.platform,
@@ -456,8 +459,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             res.json({
               success: true,
               data: {
-                title: webhookResult.title,
-                recipeId: webhookResult.id,
+                title: webhookResult.recipe_title,
+                recipeId: webhookResult.recipe_id,
                 status: webhookResult.status,
                 processedAt: webhookResult.processed_at,
                 platform: validation.platform,
@@ -470,7 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.json({
             success: false,
             status: webhookResult.status,
-            message: webhookResult.title,
+            message: webhookResult.recipe_title,
             platform: validation.platform
           });
         }

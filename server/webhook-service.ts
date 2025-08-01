@@ -10,13 +10,21 @@ const webhookRequestSchema = z.object({
   recipe_name: z.string().optional()
 });
 
-// Response schema from the external webhook
-const webhookResponseSchema = z.array(z.object({
+// Response schemas from the external webhook - handle both formats
+const webhookArrayResponseSchema = z.array(z.object({
   id: z.string().uuid(),
   status: z.string(),
   title: z.string(),
   processed_at: z.string()
 }));
+
+const webhookObjectResponseSchema = z.object({
+  success: z.boolean(),
+  status: z.string(),
+  message: z.string(),
+  recipe_id: z.string().uuid(),
+  recipe_title: z.string()
+});
 
 export type WebhookRequest = z.infer<typeof webhookRequestSchema>;
 export type WebhookResponse = z.infer<typeof webhookResponseSchema>;
@@ -71,27 +79,44 @@ export class WebhookRecipeService {
       
       const responseData = JSON.parse(responseText);
 
-      // Validate response structure
-      const validatedResponse = webhookResponseSchema.parse(responseData);
-      
-      if (validatedResponse.length === 0) {
-        throw new Error('No processing result received');
+      // Try to parse as array format first, then object format
+      let result;
+      try {
+        const arrayResponse = webhookArrayResponseSchema.parse(responseData);
+        if (arrayResponse.length === 0) {
+          throw new Error('No processing result received');
+        }
+        result = arrayResponse[0];
+        console.log(`✅ Webhook processing completed (array format): ${result.status} - ${result.title}`);
+        
+        return {
+          success: result.status === 'completed',
+          status: result.status,
+          message: result.title,
+          data: result.status === 'completed' ? {
+            recipe_id: result.id,
+            recipe_title: result.title,
+            processed_at: result.processed_at,
+            status: result.status
+          } : undefined
+        };
+      } catch {
+        // Try object format
+        const objectResponse = webhookObjectResponseSchema.parse(responseData);
+        console.log(`✅ Webhook processing completed (object format): ${objectResponse.status} - ${objectResponse.recipe_title}`);
+        
+        return {
+          success: objectResponse.success && objectResponse.status === 'completed',
+          status: objectResponse.status,
+          message: objectResponse.recipe_title,
+          data: objectResponse.success && objectResponse.status === 'completed' ? {
+            recipe_id: objectResponse.recipe_id,
+            recipe_title: objectResponse.recipe_title,
+            processed_at: new Date().toISOString(),
+            status: objectResponse.status
+          } : undefined
+        };
       }
-      
-      const result = validatedResponse[0];
-      console.log(`✅ Webhook processing completed: ${result.status} - ${result.title}`);
-      
-      return {
-        success: result.status === 'completed',
-        status: result.status,
-        message: result.title,
-        data: result.status === 'completed' ? {
-          recipe_id: result.id,
-          recipe_title: result.title,
-          processed_at: result.processed_at,
-          status: result.status
-        } : undefined
-      };
 
     } catch (error) {
       console.error('❌ Webhook service error:', error);
