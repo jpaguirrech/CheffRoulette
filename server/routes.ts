@@ -414,32 +414,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await WebhookRecipeService.processVideoRecipe(url, userId, recipeName);
       
       if (result.success && result.data) {
-        console.log(`✅ Recipe extracted successfully: ${result.data.recipe_title}`);
+        console.log(`✅ Recipe processing completed: ${result.data.recipe_title}`);
         
         res.json({
           success: true,
           data: {
             title: result.data.recipe_title,
-            description: result.data.description,
-            platform: result.data.platform,
-            prepTime: result.data.prep_time,
-            cookTime: result.data.cook_time,
-            totalTime: result.data.total_time,
-            servings: result.data.servings,
-            difficulty: result.data.difficulty_level,
-            cuisine: result.data.cuisine_type,
-            mealType: result.data.meal_type,
-            confidenceScore: result.data.ai_confidence_score,
-            socialMediaContentId: result.data.social_media_content_id,
             recipeId: result.data.recipe_id,
-            processedAt: result.data.processed_at
+            status: result.data.status,
+            processedAt: result.data.processed_at,
+            platform: validation.platform
           }
         });
       } else {
-        console.error('❌ Webhook processing failed:', result.message);
-        res.status(400).json({
+        console.log(`ℹ️ Webhook response: ${result.status} - ${result.message}`);
+        res.json({
           success: false,
-          error: result.message || 'Video processing failed'
+          status: result.status,
+          message: result.message || 'Video processing completed but no recipe extracted'
         });
       }
       

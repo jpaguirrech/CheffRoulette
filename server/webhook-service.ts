@@ -11,29 +11,12 @@ const webhookRequestSchema = z.object({
 });
 
 // Response schema from the external webhook
-const webhookResponseSchema = z.object({
-  success: z.boolean(),
+const webhookResponseSchema = z.array(z.object({
+  id: z.string().uuid(),
   status: z.string(),
-  message: z.string(),
-  data: z.object({
-    social_media_content_id: z.string().uuid(),
-    recipe_id: z.string().uuid(),
-    recipe_title: z.string(),
-    description: z.string(),
-    platform: z.string(),
-    content_type: z.string(),
-    prep_time: z.number(),
-    cook_time: z.number(),
-    total_time: z.number(),
-    servings: z.number(),
-    difficulty_level: z.string(),
-    cuisine_type: z.string(),
-    meal_type: z.string(),
-    ai_confidence_score: z.number(),
-    processed_at: z.string()
-  }).optional(),
-  error: z.string().optional()
-});
+  title: z.string(),
+  processed_at: z.string()
+}));
 
 export type WebhookRequest = z.infer<typeof webhookRequestSchema>;
 export type WebhookResponse = z.infer<typeof webhookResponseSchema>;
@@ -73,19 +56,42 @@ export class WebhookRecipeService {
         throw new Error(`Webhook API error (${response.status}): ${errorText}`);
       }
 
-      const responseData = await response.json();
-      console.log('📥 Webhook response received:', responseData);
+      const responseText = await response.text();
+      console.log('📥 Webhook response received:', responseText);
+      
+      // Handle empty response
+      if (!responseText.trim()) {
+        console.log('⚠️ Empty response from webhook API');
+        return {
+          success: false,
+          status: 'processing',
+          message: 'Video is being processed. Please check back later.'
+        };
+      }
+      
+      const responseData = JSON.parse(responseText);
 
       // Validate response structure
       const validatedResponse = webhookResponseSchema.parse(responseData);
-
-      if (!validatedResponse.success) {
-        throw new Error(`Webhook processing failed: ${validatedResponse.message || 'Unknown error'}`);
-      }
-
-      console.log(`✅ Recipe processed successfully: ${validatedResponse.data?.recipe_title}`);
       
-      return validatedResponse;
+      if (validatedResponse.length === 0) {
+        throw new Error('No processing result received');
+      }
+      
+      const result = validatedResponse[0];
+      console.log(`✅ Webhook processing completed: ${result.status} - ${result.title}`);
+      
+      return {
+        success: result.status === 'completed',
+        status: result.status,
+        message: result.title,
+        data: result.status === 'completed' ? {
+          recipe_id: result.id,
+          recipe_title: result.title,
+          processed_at: result.processed_at,
+          status: result.status
+        } : undefined
+      };
 
     } catch (error) {
       console.error('❌ Webhook service error:', error);
