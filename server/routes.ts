@@ -503,7 +503,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('❌ No valid response from webhook');
         res.json({
           success: false,
-          message: 'Video processing failed - no response received'
+          message: result.message || 'Unable to process this video. The content may be private, unavailable, or not contain extractable recipe information.',
+          error: 'Video processing failed'
         });
       }
       

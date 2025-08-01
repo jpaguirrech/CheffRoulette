@@ -83,8 +83,8 @@ export class WebhookRecipeService {
         console.log('⚠️ Empty response from webhook API');
         return {
           success: false,
-          status: 'processing',
-          message: 'Video is being processed. Please check back later.'
+          status: 'failed',
+          message: 'Unable to process this video. The content may be private, unavailable, or not supported for recipe extraction.'
         };
       }
       

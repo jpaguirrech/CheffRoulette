@@ -31,8 +31,8 @@ export default function RecipeCapture() {
         queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
       } else {
         toast({
-          title: "Capture failed",
-          description: response.error || "Unable to capture recipe.",
+          title: "Processing issue",
+          description: response.message || response.error || "This video may be private or doesn't contain extractable recipe content. Try another video.",
           variant: "destructive",
         });
       }
