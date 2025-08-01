@@ -39,7 +39,17 @@ export class WebhookRecipeService {
     contentUrl: string, 
     userId: string, 
     recipeName?: string
-  ): Promise<WebhookResponse> {
+  ): Promise<{
+    success: boolean;
+    status: string;
+    message: string;
+    data?: {
+      recipe_id: string;
+      recipe_title: string;
+      processed_at: string;
+      status: string;
+    };
+  }> {
     try {
       console.log(`🎬 Processing video with external webhook: ${contentUrl}`);
       
