@@ -59,6 +59,7 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
       }
     } catch (error) {
       setIsSpinning(false);
+      console.error('Roulette error:', error);
       toast({
         title: "No recipes found",
         description: "Try adjusting your filters or add more recipes to your collection.",
