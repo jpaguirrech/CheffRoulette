@@ -4,11 +4,55 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Clock, Users, Heart, Bookmark, Share2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Clock, Users, Heart, Bookmark, Share2, CheckCircle, ExternalLink, Play } from "lucide-react";
+import { SiTiktok, SiInstagram, SiYoutube, SiPinterest, SiFacebook, SiX } from "react-icons/si";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Recipe } from "@shared/schema";
+
+// Platform logo mapping
+const getPlatformIcon = (platform: string) => {
+  const platformLower = platform?.toLowerCase();
+  switch (platformLower) {
+    case 'tiktok':
+      return <SiTiktok className="w-5 h-5" />;
+    case 'instagram':
+      return <SiInstagram className="w-5 h-5" />;
+    case 'youtube':
+      return <SiYoutube className="w-5 h-5 text-red-600" />;
+    case 'pinterest':
+      return <SiPinterest className="w-5 h-5 text-red-600" />;
+    case 'facebook':
+      return <SiFacebook className="w-5 h-5 text-blue-600" />;
+    case 'twitter':
+    case 'x':
+      return <SiX className="w-5 h-5" />;
+    default:
+      return <ExternalLink className="w-5 h-5" />;
+  }
+};
+
+const getPlatformColor = (platform: string) => {
+  const platformLower = platform?.toLowerCase();
+  switch (platformLower) {
+    case 'tiktok':
+      return 'text-black hover:text-gray-700';
+    case 'instagram':
+      return 'text-pink-600 hover:text-pink-700';
+    case 'youtube':
+      return 'text-red-600 hover:text-red-700';
+    case 'pinterest':
+      return 'text-red-600 hover:text-red-700';
+    case 'facebook':
+      return 'text-blue-600 hover:text-blue-700';
+    case 'twitter':
+    case 'x':
+      return 'text-black hover:text-gray-700';
+    default:
+      return 'text-gray-600 hover:text-gray-700';
+  }
+};
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -115,7 +159,7 @@ export default function RecipeDetail() {
           <div>
             <div className="mb-6">
               <img 
-                src={recipe.imageUrl || "https://via.placeholder.com/600x400"} 
+                src={(recipe as any).imageUrl || "https://images.unsplash.com/photo-1546548970-71785318a17b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"} 
                 alt={recipe.title}
                 className="w-full h-80 object-cover rounded-2xl"
               />
@@ -129,11 +173,11 @@ export default function RecipeDetail() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm">{recipe.cookTime} min</span>
+                    <span className="text-sm">{(recipe as any).totalTime || recipe.cookTime || 30} min</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Users className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm">{recipe.servings} servings</span>
+                    <span className="text-sm">{recipe.servings || 4} servings</span>
                   </div>
                 </div>
                 
@@ -142,25 +186,40 @@ export default function RecipeDetail() {
                 <div>
                   <h4 className="font-medium mb-2">Tags</h4>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{recipe.cuisine}</Badge>
-                    <Badge variant="outline">{recipe.difficulty}</Badge>
-                    <Badge variant="outline">{recipe.category}</Badge>
-                    {recipe.dietaryTags.map(tag => (
+                    <Badge variant="secondary">{(recipe as any).cuisine || recipe.cuisine || 'International'}</Badge>
+                    <Badge variant="outline">{recipe.difficulty || 'Medium'}</Badge>
+                    <Badge variant="outline">{(recipe as any).category || recipe.category || 'Main Course'}</Badge>
+                    {((recipe as any).dietaryTags || recipe.dietaryTags || []).map((tag: string) => (
                       <Badge key={tag} variant="outline">{tag}</Badge>
                     ))}
                   </div>
                 </div>
                 
-                {recipe.sourceUrl && (
+                {((recipe as any).originalUrl || recipe.sourceUrl) && (
                   <>
                     <Separator />
                     <div>
-                      <h4 className="font-medium mb-2">Source</h4>
-                      <div className="flex items-center space-x-2 text-sm text-gray-600">
-                        <span>{recipe.sourcePlatform}</span>
-                        <span>•</span>
-                        <span>{recipe.sourceUsername}</span>
-                      </div>
+                      <h4 className="font-medium mb-2">Watch Original Video</h4>
+                      <a
+                        href={(recipe as any).originalUrl || recipe.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 ${getPlatformColor((recipe as any).platform || recipe.sourcePlatform || '')}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {getPlatformIcon((recipe as any).platform || recipe.sourcePlatform || '')}
+                          <Play className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-medium text-sm">
+                            {((recipe as any).platform || recipe.sourcePlatform)?.toUpperCase() || 'Video'}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {((recipe as any).username || recipe.sourceUsername) ? `@${(recipe as any).username || recipe.sourceUsername}` : 'View original recipe'}
+                          </div>
+                        </div>
+                        <ExternalLink className="w-4 h-4 ml-auto" />
+                      </a>
                     </div>
                   </>
                 )}
