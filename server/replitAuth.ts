@@ -6,7 +6,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { storage } from "./storage";
+import { storage } from "./postgres-storage";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -24,22 +24,42 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  
+  // For development, use memory store to avoid database connection issues
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Using memory store for sessions in development');
+    return session({
+      secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: sessionTtl,
+        sameSite: 'lax',
+      },
+    });
+  }
+  
+  // For production, use PostgreSQL store
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
   });
 }
@@ -72,7 +92,59 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  const config = await getOidcConfig();
+  // Development fallback authentication
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Setting up development authentication fallback');
+    
+    app.get('/api/auth/dev-login', async (req, res) => {
+      try {
+        // Create a mock user for development
+        const mockUser = {
+          claims: {
+            sub: 'dev-user-123',
+            email: 'dev@chef-roulette.com',
+            first_name: 'Developer',
+            last_name: 'User',
+            profile_image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+          },
+          access_token: 'dev-token',
+          refresh_token: 'dev-refresh',
+          expires_at: Math.floor(Date.now() / 1000) + 3600
+        };
+        
+        // Store user in database
+        await storage.upsertUser({
+          id: mockUser.claims.sub,
+          email: mockUser.claims.email,
+          firstName: mockUser.claims.first_name,
+          lastName: mockUser.claims.last_name,
+          profileImageUrl: mockUser.claims.profile_image_url,
+        });
+        
+        // Log in the user
+        req.login(mockUser, (err) => {
+          if (err) {
+            console.error('Development login error:', err);
+            return res.status(500).json({ error: 'Login failed' });
+          }
+          console.log('✅ Development user logged in successfully');
+          res.redirect('/dashboard');
+        });
+        
+      } catch (error) {
+        console.error('❌ Development auth error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+      }
+    });
+  }
+
+  let config;
+  try {
+    config = await getOidcConfig();
+  } catch (error) {
+    console.warn('⚠️ OIDC configuration failed, using development mode only:', error.message);
+    return; // Skip OAuth setup if OIDC fails
+  }
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -110,6 +182,11 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    // In development, redirect to dev login
+    if (process.env.NODE_ENV === 'development') {
+      return res.redirect('/api/auth/dev-login');
+    }
+    
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
