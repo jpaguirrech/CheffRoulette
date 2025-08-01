@@ -22,8 +22,15 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
     
     console.log(`✅ Found ${recipes.length} extracted recipes for user ${userId}`);
     
+    // Remove duplicates based on recipe ID
+    const uniqueRecipes = recipes.filter((recipe, index, self) => 
+      index === self.findIndex(r => r.extracted_recipes?.id === recipe.extracted_recipes?.id)
+    );
+    
+    console.log(`🔍 Filtered ${recipes.length} total to ${uniqueRecipes.length} unique recipes`);
+    
     // Transform the data for frontend compatibility
-    const transformedRecipes = recipes.map(item => {
+    const transformedRecipes = uniqueRecipes.map(item => {
       const recipe = item.extracted_recipes;
       const social = item.social_media_content;
       
@@ -233,4 +240,57 @@ function getDefaultImageForPlatform(platform: string): string {
   };
   
   return images[platform.toLowerCase() as keyof typeof images] || images.tiktok;
+}
+
+/**
+ * Get a single recipe by ID from Neon database (for webhook processing)
+ */
+export async function getRecipeById(recipeId: string) {
+  try {
+    console.log(`🔍 Fetching recipe by ID: ${recipeId}`);
+    
+    const result = await db
+      .select()
+      .from(extractedRecipes)
+      .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
+      .where(eq(extractedRecipes.id, recipeId))
+      .limit(1);
+    
+    if (result.length === 0) {
+      console.log(`❌ Recipe not found: ${recipeId}`);
+      return null;
+    }
+    
+    const item = result[0];
+    const recipe = item.extracted_recipes;
+    const social = item.social_media_content;
+    
+    console.log(`✅ Found recipe: ${recipe.recipeTitle}`);
+    
+    return {
+      id: recipe.id,
+      title: recipe.recipeTitle,
+      description: recipe.description,
+      ingredients: recipe.ingredients || [],
+      instructions: recipe.instructions || [],
+      prepTime: recipe.prepTime || 0,
+      cookTime: recipe.cookTime || 0,
+      totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
+      servings: recipe.servings || 1,
+      difficulty: recipe.difficultyLevel || 'medium',
+      cuisine: recipe.cuisineType || 'International',
+      category: recipe.mealType || 'Main Course',
+      dietaryTags: recipe.dietaryTags || [],
+      platform: social?.platform || 'unknown',
+      originalUrl: social?.originalUrl,
+      username: social?.title || 'Unknown Chef',
+      confidence: recipe.aiConfidenceScore,
+      createdAt: recipe.createdAt,
+      imageUrl: getDefaultImageForPlatform(social?.platform || 'tiktok'),
+      rating: 0
+    };
+  } catch (error) {
+    console.error('Error fetching recipe by ID:', error);
+    throw error;
+  }
 }

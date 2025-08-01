@@ -300,7 +300,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/recipes", getUserExtractedRecipes);
 
   // Get single recipe details from Neon database
-  app.get("/api/recipes/:id", isAuthenticated, getExtractedRecipeDetails);
+  app.get("/api/recipes/:id", async (req, res) => {
+    try {
+      const recipeId = req.params.id;
+      const neonRoutes = await import('./neon-routes');
+      
+      if (!neonRoutes.getRecipeById) {
+        console.error('getRecipeById function not found');
+        return res.status(500).json({ message: "Function not available" });
+      }
+      
+      const recipe = await neonRoutes.getRecipeById(recipeId);
+      
+      if (!recipe) {
+        return res.status(404).json({ message: "Recipe not found" });
+      }
+      
+      res.json(recipe);
+    } catch (error) {
+      console.error("Error fetching recipe:", error);
+      res.status(500).json({ message: "Failed to fetch recipe" });
+    }
+  });
 
   // Create new recipe
   app.post("/api/recipes", async (req, res) => {
