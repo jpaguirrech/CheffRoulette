@@ -231,25 +231,40 @@ function getPlatformFromUrl(url: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication
-  // Skip complex auth in development for API testing
-  if (process.env.NODE_ENV !== 'development') {
-    await setupAuth(app);
-  } else {
-    console.log('🔧 Skipping complex auth in development - using simple sessions');
-    app.use(session({
-      secret: 'dev-secret-for-testing',
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: false }
-    }));
-  }
+  // Setup authentication - always enable for proper user separation
+  console.log('🔧 Setting up authentication system');
+  await setupAuth(app);
 
   // Auth routes
   app.get('/api/auth/user', async (req: any, res) => {
     try {
-      // In development, return a mock user
+      // Check if user is actually authenticated (even in development)
+      const userId = req.user?.claims?.sub;
+      
+      if (userId && userId !== 'dev-user-123') {
+        // Real authenticated user
+        console.log(`👤 Authenticated user: ${userId}`);
+        const realUser = {
+          id: userId,
+          email: req.user?.claims?.email || 'user@chef-roulette.com',
+          firstName: req.user?.claims?.given_name || 'User',
+          lastName: req.user?.claims?.family_name || '',
+          profileImageUrl: req.user?.claims?.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+          username: req.user?.claims?.preferred_username || null,
+          points: 0, // New user starts with 0 points
+          streak: 0,
+          recipesCooked: 0,
+          weeklyPoints: 0,
+          isPro: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        return res.json(realUser);
+      }
+      
+      // Fallback to development mock user if no real authentication
       if (process.env.NODE_ENV === 'development') {
+        console.log('🔧 Using development mock user');
         const mockUser = {
           id: 'dev-user-123',
           email: 'dev@chef-roulette.com',
@@ -268,13 +283,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(mockUser);
       }
       
-      const userId = req.user?.claims?.sub;
-      if (!userId) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const user = await storage.getUser(userId);
-      res.json(user);
+      // If we reach here, no user is authenticated
+      return res.status(401).json({ message: "Not authenticated" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });

@@ -9,15 +9,22 @@ import { eq, desc } from 'drizzle-orm';
  */
 export async function getUserExtractedRecipes(req: any, res: Response) {
   try {
-    // For development, use default user or get from query params
-    let userId = req.user?.claims?.sub || 'dev-user-123';
+    // Get the actual authenticated user ID from session
+    let userId = req.user?.claims?.sub;
+    
+    // For development fallback, but only if no user is authenticated
+    if (!userId) {
+      console.log('⚠️ No authenticated user found, using development fallback');
+      userId = 'dev-user-123';
+    }
     console.log(`📋 Fetching extracted recipes for user: ${userId}`);
     
-    // Query the extracted_recipes table with social media content
+    // Query the extracted_recipes table with social media content - FILTER BY USER ID
     const recipes = await db
       .select()
       .from(extractedRecipes)
       .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
+      .where(eq(socialMediaContent.userId, userId))
       .orderBy(desc(extractedRecipes.createdAt));
     
     console.log(`✅ Found ${recipes.length} extracted recipes for user ${userId}`);
@@ -172,10 +179,13 @@ export async function getExtractedRecipeDetails(req: any, res: Response) {
  */
 export async function getRandomExtractedRecipe(req: any, res: Response) {
   try {
-    // For development, use dev user ID
+    // Get the actual authenticated user ID from session
     let userId = req.user?.claims?.sub;
+    
+    // For development fallback, but only if no user is authenticated
     if (!userId) {
-      userId = 'dev-user-123'; // Default development user
+      console.log('⚠️ No authenticated user found for roulette, using development fallback');
+      userId = 'dev-user-123';
     }
     
     console.log(`🎲 Getting random recipe for user: ${userId}`);
