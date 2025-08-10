@@ -401,10 +401,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user challenges
   app.get("/api/user/:id/challenges", async (req, res) => {
     try {
-      const userId = parseInt(req.params.id);
+      const userIdParam = req.params.id;
+      
+      // Handle both string and numeric user IDs
+      if (userIdParam === 'dev-user-123') {
+        // Return empty array for dev user since they don't have challenges in the storage system
+        return res.json([]);
+      }
+      
+      // Try to parse as number for legacy storage, otherwise use as string
+      const userIdAsNumber = parseInt(userIdParam);
+      const userId = isNaN(userIdAsNumber) ? userIdParam : userIdAsNumber.toString();
+      
       const challenges = await storage.getActiveUserChallenges(userId);
       res.json(challenges);
     } catch (error) {
+      console.error('Error getting user challenges:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
