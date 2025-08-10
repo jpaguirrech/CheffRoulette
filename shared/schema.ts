@@ -62,6 +62,7 @@ export const extractedRecipes = pgTable("extracted_recipes", {
   cuisineType: varchar("cuisine_type"),
   mealType: varchar("meal_type"), // breakfast, lunch, dinner, snack, dessert
   dietaryTags: jsonb("dietary_tags").default([]), // Array of strings
+  imageUrl: text("image_url"), // Recipe thumbnail/cover image
   chefAttribution: varchar("chef_attribution"),
   aiConfidenceScore: decimal("ai_confidence_score", { precision: 3, scale: 2 }),
   status: varchar("status").notNull().default("published"), // draft, published, archived

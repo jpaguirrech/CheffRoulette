@@ -60,7 +60,7 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
         username: social?.title || 'Unknown Chef',
         confidence: recipe.aiConfidenceScore,
         createdAt: recipe.createdAt,
-        imageUrl: getDefaultImageForPlatform(social?.platform || 'tiktok'),
+        imageUrl: recipe.imageUrl || getDefaultImageForPlatform(social?.platform || 'tiktok'),
         rating: 0 // Default rating
       };
     });
@@ -101,6 +101,7 @@ export async function getExtractedRecipeDetails(req: any, res: Response) {
         cuisine: extractedRecipes.cuisineType,
         mealType: extractedRecipes.mealType,
         dietaryTags: extractedRecipes.dietaryTags,
+        imageUrl: extractedRecipes.imageUrl,
         chef: extractedRecipes.chefAttribution,
         confidence: extractedRecipes.aiConfidenceScore,
         status: extractedRecipes.status,
@@ -145,7 +146,7 @@ export async function getExtractedRecipeDetails(req: any, res: Response) {
       platform: recipeData.platform || 'unknown',
       originalUrl: recipeData.originalUrl,
       username: recipeData.authorUsername || recipeData.author || 'Unknown Chef',
-      imageUrl: getDefaultImageForPlatform(recipeData.platform || 'tiktok'),
+      imageUrl: recipeData.imageUrl || getDefaultImageForPlatform(recipeData.platform || 'tiktok'),
       rating: 0,
       confidence: recipeData.confidence,
       createdAt: recipeData.createdAt,
@@ -242,7 +243,7 @@ export async function getRandomExtractedRecipe(req: any, res: Response) {
       username: social?.title || 'Unknown Chef',
       confidence: recipe.aiConfidenceScore,
       createdAt: recipe.createdAt,
-      imageUrl: getDefaultImageForPlatform(social?.platform || 'tiktok'),
+      imageUrl: recipe.imageUrl || getDefaultImageForPlatform(social?.platform || 'tiktok'),
       rating: 0
     };
     
@@ -317,7 +318,7 @@ export async function getRecipeById(recipeId: string) {
       username: social?.title || 'Unknown Chef',
       confidence: recipe.aiConfidenceScore,
       createdAt: recipe.createdAt,
-      imageUrl: getDefaultImageForPlatform(social?.platform || 'tiktok'),
+      imageUrl: recipe.imageUrl || getDefaultImageForPlatform(social?.platform || 'tiktok'),
       rating: 0
     };
   } catch (error) {

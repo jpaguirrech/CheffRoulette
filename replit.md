@@ -158,6 +158,9 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - January 24, 2025: Integrated external webhook API for real video processing (flw.panteragpt.com)
 - January 24, 2025: Enhanced recipe capture UI with platform validation and processing status
 - January 24, 2025: Created Neon-specific routes for accessing extracted recipes from real database
+- August 10, 2025: Added thumbnail image support with imageUrl field to extracted_recipes table
+- August 10, 2025: Enhanced success messaging for recipe extraction with clear feedback
+- August 10, 2025: Implemented automatic page refresh after successful recipe capture (2-3 seconds)
 
 ## Application Flow
 
