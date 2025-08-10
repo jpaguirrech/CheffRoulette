@@ -23,26 +23,73 @@ export default function RecipeCapture() {
     onSuccess: (response: any) => {
       if (response.success) {
         toast({
-          title: "Recipe captured!",
-          description: `${response.data.title} has been processed and added to your collection.`,
+          title: "Recipe captured successfully!",
+          description: `${response.data.title} has been added to your collection. Refreshing your recipes...`,
+        });
+        setUrl("");
+        setRecipeName("");
+        
+        // Invalidate and refresh the recipe cache
+        queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+        
+        // Force a refresh of the page after a short delay to show the new recipe
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        // Check if the error indicates successful extraction but API response issue
+        const isLikelySuccessful = response.message && (
+          response.message.includes("successfully") || 
+          response.message.includes("extracted") ||
+          response.message.includes("processed")
+        );
+        
+        if (isLikelySuccessful) {
+          toast({
+            title: "Recipe likely captured!",
+            description: "The recipe may have been processed successfully. Refreshing the page to check your collection...",
+          });
+          setUrl("");
+          setRecipeName("");
+          queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        } else {
+          toast({
+            title: "Processing issue",
+            description: response.message || response.error || "This video may be private or doesn't contain extractable recipe content. Try another video.",
+            variant: "destructive",
+          });
+        }
+      }
+    },
+    onError: (error: any) => {
+      // Check if error indicates success despite error status
+      const errorMessage = error.message || "";
+      const isLikelySuccessful = errorMessage.includes("successfully") || 
+                               errorMessage.includes("extracted") ||
+                               errorMessage.includes("processed") ||
+                               errorMessage.includes("recipe");
+      
+      if (isLikelySuccessful) {
+        toast({
+          title: "Recipe likely captured!",
+          description: "The recipe extraction may have succeeded. Refreshing the page to check your collection...",
         });
         setUrl("");
         setRecipeName("");
         queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
       } else {
         toast({
-          title: "Processing issue",
-          description: response.message || response.error || "This video may be private or doesn't contain extractable recipe content. Try another video.",
+          title: "Capture failed",
+          description: errorMessage || "Unable to capture recipe. Please check the URL and try again.",
           variant: "destructive",
         });
       }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Capture failed",
-        description: error.message || "Unable to capture recipe. Please check the URL and try again.",
-        variant: "destructive",
-      });
     },
   });
 

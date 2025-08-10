@@ -487,6 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               console.log(`📋 Retrieved full recipe details: ${recipeDetails.title}`);
               res.json({
                 success: true,
+                message: `Recipe "${recipeDetails.title}" has been successfully extracted and added to your collection!`,
                 data: {
                   ...recipeDetails,
                   recipeId: webhookResult.recipe_id,
@@ -498,13 +499,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             } else {
               res.json({
                 success: true,
+                message: `Recipe "${webhookResult.recipe_title}" has been successfully processed and added to your collection!`,
                 data: {
                   title: webhookResult.recipe_title,
                   recipeId: webhookResult.recipe_id,
                   status: webhookResult.status,
                   processedAt: webhookResult.processed_at,
-                  platform: validation.platform,
-                  message: 'Recipe processed successfully, but full details not yet available'
+                  platform: validation.platform
                 }
               });
             }
@@ -512,13 +513,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error('Error fetching recipe details:', dbError);
             res.json({
               success: true,
+              message: `Recipe "${webhookResult.recipe_title}" has been successfully processed and added to your collection!`,
               data: {
                 title: webhookResult.recipe_title,
                 recipeId: webhookResult.recipe_id,
                 status: webhookResult.status,
                 processedAt: webhookResult.processed_at,
-                platform: validation.platform,
-                message: 'Recipe processed successfully'
+                platform: validation.platform
               }
             });
           }
