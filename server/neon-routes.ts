@@ -21,7 +21,10 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
     
     // Query the extracted_recipes table with social media content - FILTER BY USER ID
     const recipes = await db
-      .select()
+      .select({
+        extracted_recipes: extractedRecipes,
+        social_media_content: socialMediaContent
+      })
       .from(extractedRecipes)
       .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
       .where(eq(socialMediaContent.userId, userId))
@@ -40,6 +43,11 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
     const transformedRecipes = uniqueRecipes.map(item => {
       const recipe = item.extracted_recipes;
       const social = item.social_media_content;
+      
+      // Debug log for image URLs
+      if (recipe.recipeTitle?.includes('Cauliflower')) {
+        console.log(`🖼️ Debug - Recipe: ${recipe.recipeTitle}, Image URL: ${recipe.imageUrl}`);
+      }
       
       return {
         id: recipe.id,
