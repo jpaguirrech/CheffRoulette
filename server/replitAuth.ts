@@ -26,7 +26,8 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   
   // For development, use memory store to avoid database connection issues
-  if (process.env.NODE_ENV === 'development') {
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  if (isDevelopment) {
     console.log('🔧 Using memory store for sessions in development');
     return session({
       secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
@@ -59,7 +60,7 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
     },
   });
 }
@@ -93,7 +94,8 @@ export async function setupAuth(app: Express) {
   app.use(passport.session());
 
   // Development fallback authentication
-  if (process.env.NODE_ENV === 'development') {
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  if (isDevelopment) {
     console.log('🔧 Setting up development authentication fallback');
     
     app.get('/api/auth/dev-login', async (req, res) => {
@@ -165,6 +167,11 @@ export async function setupAuth(app: Express) {
     domains.push(productionDomain);
   }
   
+  console.log(`🔧 Setting up authentication for domains: ${domains.join(', ')}`);
+  console.log(`🔧 REPL_ID: ${process.env.REPL_ID}`);
+  console.log(`🔧 Production domain included: ${domains.includes(productionDomain)}`);
+  
+  
   for (const domain of domains) {
     const strategy = new Strategy(
       {
@@ -183,19 +190,28 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     // In development, redirect to dev login
-    if (process.env.NODE_ENV === 'development') {
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+    if (isDevelopment) {
       return res.redirect('/api/auth/dev-login');
     }
     
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    // Get the correct hostname - check for production domain
+    const hostname = req.hostname === 'ai-company.co' ? 'ai-company.co' : req.hostname;
+    console.log(`🔐 Login attempt for domain: ${hostname}`);
+    
+    passport.authenticate(`replitauth:${hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
+    // Get the correct hostname - check for production domain
+    const hostname = req.hostname === 'ai-company.co' ? 'ai-company.co' : req.hostname;
+    console.log(`🔐 Callback for domain: ${hostname}`);
+    
+    passport.authenticate(`replitauth:${hostname}`, {
+      successReturnToOrRedirect: "/dashboard",
       failureRedirect: "/api/login",
     })(req, res, next);
   });

@@ -263,7 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Fallback to development mock user if no real authentication
-      if (process.env.NODE_ENV === 'development') {
+      const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+      if (isDevelopment) {
         console.log('🔧 Using development mock user');
         const mockUser = {
           id: 'dev-user-123',
@@ -282,6 +283,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         return res.json(mockUser);
       }
+      
+      // In production, log debugging information
+      console.log('❌ No authenticated user in production');
+      console.log('Session info:', {
+        sessionID: req.sessionID,
+        isAuthenticated: req.isAuthenticated(),
+        user: req.user ? 'User object exists' : 'No user object',
+        hostname: req.hostname
+      });
       
       // If we reach here, no user is authenticated
       return res.status(401).json({ message: "Not authenticated" });
