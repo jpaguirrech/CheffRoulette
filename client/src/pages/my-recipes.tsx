@@ -2,14 +2,34 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Users, Heart, Bookmark, ExternalLink } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Clock, Users, Heart, Bookmark, ExternalLink, Filter, X } from "lucide-react";
 import { Link } from "wouter";
+import { useState, useMemo } from "react";
 import type { Recipe } from "@shared/schema";
+
+interface Filters {
+  cuisines: string[];
+  difficulties: string[];
+  categories: string[];
+  dietaryTags: string[];
+}
 
 export default function MyRecipes() {
   const { data: recipes, isLoading } = useQuery<Recipe[]>({
     queryKey: ["/api/recipes"],
   });
+
+  const [filters, setFilters] = useState<Filters>({
+    cuisines: [],
+    difficulties: [],
+    categories: [],
+    dietaryTags: []
+  });
+  
+  const [showFilters, setShowFilters] = useState(false);
 
   if (isLoading) {
     return (
@@ -38,8 +58,56 @@ export default function MyRecipes() {
     );
   }
 
-  // In development, show all recipes since we have a mock user
-  const userRecipes = recipes || [];
+  // Filter options derived from actual data
+  const filterOptions = useMemo(() => {
+    if (!recipes) return { cuisines: [], difficulties: [], categories: [], dietaryTags: [] };
+    
+    const cuisines = Array.from(new Set(recipes.map(r => r.cuisine).filter(Boolean) as string[])).sort();
+    const difficulties = Array.from(new Set(recipes.map(r => r.difficulty).filter(Boolean) as string[])).sort();
+    const categories = Array.from(new Set(recipes.map(r => r.category).filter(Boolean) as string[])).sort();
+    const dietaryTags = Array.from(new Set(recipes.flatMap(r => r.dietaryTags || []))).sort();
+    
+    return { cuisines, difficulties, categories, dietaryTags };
+  }, [recipes]);
+
+  // Apply filters to recipes
+  const filteredRecipes = useMemo(() => {
+    if (!recipes) return [];
+    
+    return recipes.filter(recipe => {
+      if (filters.cuisines.length > 0 && recipe.cuisine && !filters.cuisines.includes(recipe.cuisine)) return false;
+      if (filters.difficulties.length > 0 && recipe.difficulty && !filters.difficulties.includes(recipe.difficulty)) return false;
+      if (filters.categories.length > 0 && recipe.category && !filters.categories.includes(recipe.category)) return false;
+      if (filters.dietaryTags.length > 0) {
+        const hasMatchingTag = filters.dietaryTags.some(tag => 
+          recipe.dietaryTags?.includes(tag)
+        );
+        if (!hasMatchingTag) return false;
+      }
+      return true;
+    });
+  }, [recipes, filters]);
+
+  const handleFilterChange = (filterType: keyof Filters, value: string, checked: boolean) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: checked 
+        ? [...prev[filterType], value]
+        : prev[filterType].filter(item => item !== value)
+    }));
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      cuisines: [],
+      difficulties: [],
+      categories: [],
+      dietaryTags: []
+    });
+  };
+
+  const activeFilterCount = Object.values(filters).flat().length;
+  const userRecipes = filteredRecipes;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -47,15 +115,174 @@ export default function MyRecipes() {
         <div>
           <h1 className="text-3xl font-bold">My Recipes</h1>
           <p className="text-gray-600 mt-2">
-            {userRecipes.length} recipes saved
+            {userRecipes.length} of {recipes?.length || 0} recipes
+            {activeFilterCount > 0 && ` (${activeFilterCount} filters active)`}
           </p>
         </div>
-        <Link href="/">
-          <Button>
-            Capture New Recipe
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowFilters(!showFilters)}
+            className="relative"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filters
+            {activeFilterCount > 0 && (
+              <Badge className="ml-2 px-1.5 py-0.5 text-xs">
+                {activeFilterCount}
+              </Badge>
+            )}
           </Button>
-        </Link>
+          <Link href="/">
+            <Button>
+              Capture New Recipe
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      <div className="flex gap-8">
+        {/* Filter Sidebar */}
+        {showFilters && (
+          <div className="w-80 flex-shrink-0">
+            <Card className="sticky top-4">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Filters</CardTitle>
+                  <div className="flex gap-2">
+                    {activeFilterCount > 0 && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={clearAllFilters}
+                        className="text-sm"
+                      >
+                        Clear All
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowFilters(false)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-96">
+                  <div className="space-y-6">
+                    {/* Cuisine Filter */}
+                    <div>
+                      <h3 className="font-medium mb-3">Cuisine</h3>
+                      <div className="space-y-2">
+                        {filterOptions.cuisines.map(cuisine => (
+                          <div key={cuisine} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`cuisine-${cuisine}`}
+                              checked={filters.cuisines.includes(cuisine)}
+                              onCheckedChange={(checked) => 
+                                handleFilterChange('cuisines', cuisine, !!checked)
+                              }
+                            />
+                            <label 
+                              htmlFor={`cuisine-${cuisine}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {cuisine}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Difficulty Filter */}
+                    <div>
+                      <h3 className="font-medium mb-3">Difficulty</h3>
+                      <div className="space-y-2">
+                        {filterOptions.difficulties.map(difficulty => (
+                          <div key={difficulty} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`difficulty-${difficulty}`}
+                              checked={filters.difficulties.includes(difficulty)}
+                              onCheckedChange={(checked) => 
+                                handleFilterChange('difficulties', difficulty, !!checked)
+                              }
+                            />
+                            <label 
+                              htmlFor={`difficulty-${difficulty}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+                            >
+                              {difficulty}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Category Filter */}
+                    <div>
+                      <h3 className="font-medium mb-3">Meal Type</h3>
+                      <div className="space-y-2">
+                        {filterOptions.categories.map(category => (
+                          <div key={category} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`category-${category}`}
+                              checked={filters.categories.includes(category)}
+                              onCheckedChange={(checked) => 
+                                handleFilterChange('categories', category, !!checked)
+                              }
+                            />
+                            <label 
+                              htmlFor={`category-${category}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+                            >
+                              {category}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Dietary Tags Filter */}
+                    <div>
+                      <h3 className="font-medium mb-3">Dietary Tags</h3>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {filterOptions.dietaryTags.slice(0, 15).map(tag => (
+                          <div key={tag} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`tag-${tag}`}
+                              checked={filters.dietaryTags.includes(tag)}
+                              onCheckedChange={(checked) => 
+                                handleFilterChange('dietaryTags', tag, !!checked)
+                              }
+                            />
+                            <label 
+                              htmlFor={`tag-${tag}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {tag}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1">
 
       {userRecipes.length === 0 ? (
         <div className="text-center py-12">
@@ -155,6 +382,8 @@ export default function MyRecipes() {
           ))}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }
