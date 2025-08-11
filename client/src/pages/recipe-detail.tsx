@@ -159,7 +159,7 @@ export default function RecipeDetail() {
           <div>
             <div className="mb-6">
               <img 
-                src={(recipe as any).imageUrl || "https://images.unsplash.com/photo-1546548970-71785318a17b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"} 
+                src={recipe.imageUrl || "https://images.unsplash.com/photo-1546548970-71785318a17b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"} 
                 alt={recipe.title}
                 className="w-full h-80 object-cover rounded-2xl"
               />

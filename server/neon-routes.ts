@@ -44,9 +44,9 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
       const recipe = item.extracted_recipes;
       const social = item.social_media_content;
       
-      // Debug log for image URLs
-      if (recipe.recipeTitle?.includes('Cauliflower')) {
-        console.log(`🖼️ Debug - Recipe: ${recipe.recipeTitle}, Image URL: ${recipe.imageUrl}`);
+      // Log only recipes with images for monitoring
+      if (recipe.imageUrl) {
+        console.log(`🖼️ Recipe with image: ${recipe.recipeTitle}`);
       }
       
       return {
