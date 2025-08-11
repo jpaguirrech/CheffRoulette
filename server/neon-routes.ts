@@ -44,10 +44,7 @@ export async function getUserExtractedRecipes(req: any, res: Response) {
       const recipe = item.extracted_recipes;
       const social = item.social_media_content;
       
-      // Log only recipes with images for monitoring
-      if (recipe.imageUrl) {
-        console.log(`🖼️ Recipe with image: ${recipe.recipeTitle}`);
-      }
+
       
       return {
         id: recipe.id,

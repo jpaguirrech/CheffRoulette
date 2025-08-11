@@ -161,6 +161,8 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - August 10, 2025: Added thumbnail image support with imageUrl field to extracted_recipes table
 - August 10, 2025: Enhanced success messaging for recipe extraction with clear feedback
 - August 10, 2025: Implemented automatic page refresh after successful recipe capture (2-3 seconds)
+- August 11, 2025: Verified S3 image integration working correctly - recipes with thumbnails display S3 URLs, others use fallback images
+- August 11, 2025: Fixed recipe details page to properly display S3 images instead of fallback URLs
 
 ## Application Flow
 
