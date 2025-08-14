@@ -1,5 +1,6 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 import passport from "passport";
 import session from "express-session";
@@ -83,7 +84,7 @@ async function upsertUser(
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
+    profileImageUrl: claims["profile_image_url"] || claims["picture"],
   });
 }
 
@@ -185,6 +186,38 @@ export async function setupAuth(app: Express) {
     passport.use(strategy);
   }
 
+  // Google OAuth Strategy
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    const domains = process.env.REPLIT_DOMAINS!.split(",");
+    for (const domain of domains) {
+      passport.use(new GoogleStrategy({
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: `https://${domain}/api/google/callback`,
+        scope: ['profile', 'email']
+      }, async (accessToken, refreshToken, profile, done) => {
+        try {
+          const user = {
+            claims: {
+              sub: profile.id,
+              email: profile.emails?.[0]?.value,
+              first_name: profile.name?.givenName,
+              last_name: profile.name?.familyName,
+              picture: profile.photos?.[0]?.value,
+            },
+            access_token: accessToken,
+            refresh_token: refreshToken
+          };
+          
+          await upsertUser(user.claims);
+          done(null, user);
+        } catch (error) {
+          done(error, null);
+        }
+      }));
+    }
+  }
+
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
@@ -213,6 +246,18 @@ export async function setupAuth(app: Express) {
     passport.authenticate(`replitauth:${hostname}`, {
       successReturnToOrRedirect: "/dashboard",
       failureRedirect: "/api/login",
+    })(req, res, next);
+  });
+
+  // Google OAuth routes
+  app.get('/api/google/login', (req, res, next) => {
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+  });
+
+  app.get('/api/google/callback', (req, res, next) => {
+    passport.authenticate('google', {
+      successRedirect: '/',
+      failureRedirect: '/api/google/login',
     })(req, res, next);
   });
 
