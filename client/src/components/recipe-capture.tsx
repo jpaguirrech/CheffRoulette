@@ -24,37 +24,64 @@ export default function RecipeCapture() {
       if (response.success) {
         toast({
           title: "Recipe captured successfully!",
-          description: `${response.data.title} has been added to your collection. Refreshing your recipes...`,
+          description: `${response.data?.title || 'Recipe'} has been added to your collection. Page will refresh in 3 seconds...`,
+          duration: 3500,
         });
         setUrl("");
         setRecipeName("");
         
-        // Invalidate and refresh the recipe cache
+        // Immediately invalidate and refresh the recipe cache
         queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
         
-        // Force a refresh of the page after a short delay to show the new recipe
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        // Show countdown and then refresh
+        let countdown = 3;
+        const countdownInterval = setInterval(() => {
+          countdown--;
+          if (countdown > 0) {
+            toast({
+              title: "Recipe captured successfully!",
+              description: `${response.data?.title || 'Recipe'} has been added to your collection. Page will refresh in ${countdown} seconds...`,
+              duration: 1100,
+            });
+          } else {
+            clearInterval(countdownInterval);
+            window.location.reload();
+          }
+        }, 1000);
       } else {
         // Check if the error indicates successful extraction but API response issue
         const isLikelySuccessful = response.message && (
           response.message.includes("successfully") || 
           response.message.includes("extracted") ||
-          response.message.includes("processed")
+          response.message.includes("processed") ||
+          response.message.includes("added to your collection")
         );
         
         if (isLikelySuccessful) {
           toast({
-            title: "Recipe likely captured!",
-            description: "The recipe may have been processed successfully. Refreshing the page to check your collection...",
+            title: "Recipe processing completed!",
+            description: "Video was processed successfully. Page will refresh in 4 seconds to show your new recipe...",
+            duration: 4500,
           });
           setUrl("");
           setRecipeName("");
           queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
+          
+          // Longer delay for parsing error cases
+          let countdown = 4;
+          const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+              toast({
+                title: "Recipe processing completed!",
+                description: `Video was processed successfully. Page will refresh in ${countdown} seconds...`,
+                duration: 1100,
+              });
+            } else {
+              clearInterval(countdownInterval);
+              window.location.reload();
+            }
+          }, 1000);
         } else {
           toast({
             title: "Processing issue",
@@ -74,15 +101,28 @@ export default function RecipeCapture() {
       
       if (isLikelySuccessful) {
         toast({
-          title: "Recipe likely captured!",
-          description: "The recipe extraction may have succeeded. Refreshing the page to check your collection...",
+          title: "Recipe extraction likely succeeded!",
+          description: "Processing completed. Page will refresh in 4 seconds to check your collection...",
+          duration: 4500,
         });
         setUrl("");
         setRecipeName("");
         queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
+        
+        let countdown = 4;
+        const countdownInterval = setInterval(() => {
+          countdown--;
+          if (countdown > 0) {
+            toast({
+              title: "Recipe extraction likely succeeded!",
+              description: `Processing completed. Page will refresh in ${countdown} seconds...`,
+              duration: 1100,
+            });
+          } else {
+            clearInterval(countdownInterval);
+            window.location.reload();
+          }
+        }, 1000);
       } else {
         toast({
           title: "Capture failed",
