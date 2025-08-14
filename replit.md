@@ -165,6 +165,9 @@ Chef Roulette operates on a freemium model with a clear value proposition for up
 - August 11, 2025: Fixed recipe details page to properly display S3 images instead of fallback URLs
 - August 14, 2025: Fixed false error messages during recipe capture - improved webhook response parsing
 - August 14, 2025: Enhanced automatic page refresh with countdown timer and better user feedback
+- August 14, 2025: Added Google OAuth authentication alongside Replit auth for user login options
+- August 14, 2025: Implemented chef avatar selection system with cartoon chef characters for users without profile pictures
+- August 14, 2025: Created comprehensive profile settings page with avatar customization and user info management
 
 ## Application Flow
 

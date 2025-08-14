@@ -8,6 +8,7 @@ import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import RecipeDetail from "@/pages/recipe-detail";
 import MyRecipes from "@/pages/my-recipes";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
@@ -40,6 +41,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/my-recipes" component={MyRecipes} />
+      <Route path="/profile" component={Profile} />
       <Route path="/recipe/:id" component={RecipeDetail} />
       <Route component={NotFound} />
     </Switch>

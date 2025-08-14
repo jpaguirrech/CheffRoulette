@@ -300,6 +300,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
+
+  // Update user profile
+  app.patch('/api/user/:id', async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const currentUserId = req.user?.claims?.sub || 'dev-user-123';
+      
+      // Ensure user can only update their own profile
+      if (userId !== currentUserId) {
+        return res.status(403).json({ message: "Forbidden: Can only update your own profile" });
+      }
+
+      const updates = req.body;
+      
+      // For development mock user, just return success
+      if (userId === 'dev-user-123') {
+        return res.json({
+          ...updates,
+          id: 'dev-user-123',
+          updatedAt: new Date().toISOString()
+        });
+      }
+      
+      const updatedUser = await storage.updateUser(userId, updates);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
   // Get user profile
   app.get("/api/user/:id", async (req, res) => {
     try {

@@ -80,17 +80,21 @@ export default function Navigation({ user, onUpgradeClick }: NavigationProps) {
                 
                 {/* User Profile */}
                 <div className="flex items-center space-x-2">
-                  <img 
-                    src={user.profileImageUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face'} 
-                    alt={`${user.firstName || user.username || 'User'}'s profile`}
-                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face';
-                    }}
-                  />
-                  <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                    {user.firstName || user.username || 'User'}
-                  </span>
+                  <Link href="/profile">
+                    <img 
+                      src={user.profileImageUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}&backgroundColor=f1f5f9`} 
+                      alt={`${user.firstName || user.username || 'User'}'s profile`}
+                      className="w-8 h-8 rounded-full object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}&backgroundColor=f1f5f9`;
+                      }}
+                    />
+                  </Link>
+                  <Link href="/profile">
+                    <span className="text-sm font-medium text-gray-700 hidden sm:block hover:text-green-600 cursor-pointer">
+                      {user.firstName || user.username || 'Chef'}
+                    </span>
+                  </Link>
                   <Button 
                     variant="outline" 
                     size="sm"
