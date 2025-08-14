@@ -111,22 +111,56 @@ export class WebhookRecipeService {
             status: result.status
           } : undefined
         };
-      } catch {
-        // Try object format
-        const objectResponse = webhookObjectResponseSchema.parse(responseData);
-        console.log(`✅ Webhook processing completed (object format): ${objectResponse.status} - ${objectResponse.recipe_title}`);
+      } catch (arrayError) {
+        console.log('🔄 Array format parsing failed, trying object format...');
         
-        return {
-          success: objectResponse.success && objectResponse.status === 'completed',
-          status: objectResponse.status,
-          message: objectResponse.recipe_title,
-          data: objectResponse.success && objectResponse.status === 'completed' ? {
-            recipe_id: objectResponse.recipe_id,
-            recipe_title: objectResponse.recipe_title,
-            processed_at: new Date().toISOString(),
-            status: objectResponse.status
-          } : undefined
-        };
+        try {
+          const objectResponse = webhookObjectResponseSchema.parse(responseData);
+          console.log(`✅ Webhook processing completed (object format): ${objectResponse.status} - ${objectResponse.recipe_title}`);
+          
+          return {
+            success: objectResponse.success && objectResponse.status === 'completed',
+            status: objectResponse.status,
+            message: objectResponse.recipe_title,
+            data: objectResponse.success && objectResponse.status === 'completed' ? {
+              recipe_id: objectResponse.recipe_id,
+              recipe_title: objectResponse.recipe_title,
+              processed_at: new Date().toISOString(),
+              status: objectResponse.status
+            } : undefined
+          };
+        } catch (objectError) {
+          console.error('❌ Failed to parse webhook response in both formats:');
+          console.error('Array format error:', arrayError);
+          console.error('Object format error:', objectError);
+          console.error('Raw response data:', responseData);
+          
+          // Check if this might still be a successful response based on content
+          if (responseData && typeof responseData === 'object') {
+            // Look for success indicators in the raw response
+            const hasRecipeData = responseData.recipe_id || responseData.id || 
+                                 responseData.recipe_title || responseData.title;
+            const hasSuccessStatus = responseData.success === true || 
+                                   responseData.status === 'completed';
+            
+            if (hasRecipeData && hasSuccessStatus) {
+              console.log('🔧 Attempting to handle non-standard successful response...');
+              return {
+                success: true,
+                status: responseData.status || 'completed',
+                message: responseData.recipe_title || responseData.title || 'Recipe processed successfully',
+                data: {
+                  recipe_id: responseData.recipe_id || responseData.id,
+                  recipe_title: responseData.recipe_title || responseData.title,
+                  processed_at: responseData.processed_at || new Date().toISOString(),
+                  status: responseData.status || 'completed'
+                }
+              };
+            }
+          }
+          
+          throw new Error('Unable to parse webhook response - unexpected format');
+        }
       }
 
     } catch (error) {

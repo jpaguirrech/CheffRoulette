@@ -565,10 +565,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: false,
           error: 'Video processing service is temporarily unavailable. Please try again later.'
         });
-      } else if (error.message.includes('Invalid data format')) {
-        res.status(400).json({
+      } else if (error.message.includes('Invalid data format') || error.message.includes('Unable to parse webhook response')) {
+        // This might be a parsing issue rather than a processing failure
+        // Check if new recipes were actually added to the database
+        console.error('⚠️ Response parsing issue, checking if recipes were actually processed...');
+        
+        try {
+          const neonRoutes = await import('./neon-routes');
+          const recentRecipes = await neonRoutes.getUserRecentRecipes(userId, 1); // Get 1 most recent recipe
+          
+          if (recentRecipes && recentRecipes.length > 0) {
+            const latestRecipe = recentRecipes[0];
+            const timeDiff = Date.now() - new Date(latestRecipe.createdAt || latestRecipe.processed_at).getTime();
+            
+            // If recipe was created in the last 5 minutes, it's likely from this request
+            if (timeDiff < 5 * 60 * 1000) {
+              console.log('✅ Found recently processed recipe despite parsing error');
+              res.json({
+                success: true,
+                message: `Recipe "${latestRecipe.title}" has been successfully extracted and added to your collection!`,
+                data: {
+                  ...latestRecipe,
+                  platform: validation.platform
+                }
+              });
+              return;
+            }
+          }
+        } catch (dbError) {
+          console.error('Error checking for recent recipes:', dbError);
+        }
+        
+        // If no recent recipe found, return the parsing error
+        res.status(202).json({
           success: false,
-          error: 'Invalid URL or request format.'
+          error: 'Video processing completed but response format was unexpected. Please check your recipes - the video may have been processed successfully.',
+          note: 'Refresh the page to see if your recipe was added.'
         });
       } else {
         res.status(500).json({

@@ -5,6 +5,58 @@ import { extractedRecipes, socialMediaContent } from '../shared/schema';
 import { eq, desc } from 'drizzle-orm';
 
 /**
+ * Get recent recipes for a user (helper function)
+ */
+export async function getUserRecentRecipes(userId: string, limit: number = 10) {
+  try {
+    console.log(`📋 Fetching ${limit} recent recipes for user: ${userId}`);
+    
+    const recipes = await db
+      .select({
+        extracted_recipes: extractedRecipes,
+        social_media_content: socialMediaContent
+      })
+      .from(extractedRecipes)
+      .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
+      .where(eq(socialMediaContent.userId, userId))
+      .orderBy(desc(extractedRecipes.createdAt))
+      .limit(limit);
+    
+    return recipes.map(item => {
+      const recipe = item.extracted_recipes;
+      const social = item.social_media_content;
+      
+      return {
+        id: recipe.id,
+        title: recipe.recipeTitle,
+        description: recipe.description,
+        ingredients: recipe.ingredients || [],
+        instructions: recipe.instructions || [],
+        prepTime: recipe.prepTime || 0,
+        cookTime: recipe.cookTime || 0,
+        totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
+        servings: recipe.servings || 1,
+        difficulty: recipe.difficultyLevel || 'medium',
+        cuisine: recipe.cuisineType || 'International',
+        category: recipe.mealType || 'Main Course',
+        dietaryTags: recipe.dietaryTags || [],
+        platform: social?.platform || 'unknown',
+        originalUrl: social?.originalUrl,
+        username: social?.title || 'Unknown Chef',
+        confidence: recipe.aiConfidenceScore,
+        createdAt: recipe.createdAt,
+        processed_at: recipe.createdAt,
+        imageUrl: recipe.imageUrl || getDefaultImageForPlatform(social?.platform || 'tiktok'),
+        rating: 0
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching recent recipes:', error);
+    return [];
+  }
+}
+
+/**
  * Get all extracted recipes for a user from Neon database
  */
 export async function getUserExtractedRecipes(req: any, res: Response) {
