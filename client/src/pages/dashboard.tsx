@@ -43,7 +43,7 @@ export default function Dashboard() {
     if (filters.cuisine && recipe.cuisine !== filters.cuisine) return false;
     if (filters.difficulty && recipe.difficulty !== filters.difficulty) return false;
     if (filters.category && recipe.category !== filters.category) return false;
-    if (filters.cookTime && recipe.cookTime > filters.cookTime) return false;
+    if (filters.cookTime && (recipe.cookTime || 0) > filters.cookTime) return false;
     if (filters.dietaryTags && filters.dietaryTags.length > 0) {
       if (!recipe.dietaryTags?.some(tag => filters.dietaryTags?.includes(tag))) return false;
     }

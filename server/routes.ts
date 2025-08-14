@@ -572,11 +572,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         try {
           const neonRoutes = await import('./neon-routes');
-          const recentRecipes = await neonRoutes.getUserRecentRecipes(userId, 1); // Get 1 most recent recipe
+          // Get the authenticated user ID from the request context
+          const currentUserId = req.user?.claims?.sub || 'dev-user-123';
+          const recentRecipes = await neonRoutes.getUserRecentRecipes(currentUserId, 1); // Get 1 most recent recipe
           
           if (recentRecipes && recentRecipes.length > 0) {
             const latestRecipe = recentRecipes[0];
-            const timeDiff = Date.now() - new Date(latestRecipe.createdAt || latestRecipe.processed_at).getTime();
+            const recipeDate = latestRecipe.createdAt || latestRecipe.processed_at;
+            const timeDiff = recipeDate ? Date.now() - new Date(recipeDate).getTime() : Infinity;
             
             // If recipe was created in the last 5 minutes, it's likely from this request
             if (timeDiff < 5 * 60 * 1000) {
@@ -586,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 message: `Recipe "${latestRecipe.title}" has been successfully extracted and added to your collection!`,
                 data: {
                   ...latestRecipe,
-                  platform: validation.platform
+                  platform: 'tiktok' // Default platform since validation is not available in error context
                 }
               });
               return;
