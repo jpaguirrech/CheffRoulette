@@ -82,11 +82,11 @@ export default function Navigation({ user, onUpgradeClick }: NavigationProps) {
                 <div className="flex items-center space-x-2">
                   <Link href="/profile">
                     <img 
-                      src={user.profileImageUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}&backgroundColor=f1f5f9`} 
+                      src={user.profileImageUrl || `https://robohash.org/${user.id}.png?set=set5&size=80x80`} 
                       alt={`${user.firstName || user.username || 'User'}'s profile`}
                       className="w-8 h-8 rounded-full object-cover border border-gray-200 cursor-pointer hover:ring-2 hover:ring-green-500 transition-all"
                       onError={(e) => {
-                        e.currentTarget.src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.id}&backgroundColor=f1f5f9`;
+                        e.currentTarget.src = `https://robohash.org/default-chef.png?set=set5&size=80x80`;
                       }}
                     />
                   </Link>
