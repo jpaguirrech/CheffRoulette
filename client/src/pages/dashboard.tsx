@@ -152,28 +152,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Hero Section */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-8 text-white">
-              <h2 className="text-2xl font-bold mb-4">What's Cooking Today?</h2>
-              <p className="text-green-100 mb-6">
-                Capture recipes from social media or spin the roulette to discover something new!
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-green-600 hover:bg-gray-100"
-                >
-                  + Capture Recipe
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-white text-white hover:bg-white hover:text-green-600"
-                >
-                  🎰 Spin Roulette
-                </Button>
-              </div>
-            </div>
+
 
             {/* Quick Capture */}
             <div>
