@@ -180,8 +180,20 @@ export default function Dashboard() {
                 </Card>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                  {recentRecipes.map((recipe) => (
-                    <RecipeCard key={recipe.id} recipe={recipe} />
+                  {recentRecipes.map((recipe, index) => (
+                    <div key={recipe.id}>
+                      <RecipeCard recipe={recipe} />
+                      {/* Show ad after first recipe for free users */}
+                      {index === 0 && !user?.isPro && (
+                        <div className="mt-6">
+                          <AdBanner 
+                            type="responsive" 
+                            onUpgrade={handleUpgradeClick}
+                            className="rounded-lg overflow-hidden"
+                          />
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
