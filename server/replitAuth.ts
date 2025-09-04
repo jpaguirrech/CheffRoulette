@@ -131,7 +131,7 @@ export async function setupAuth(app: Express) {
             return res.status(500).json({ error: 'Login failed' });
           }
           console.log('✅ Development user logged in successfully');
-          res.redirect('/dashboard');
+          res.redirect('/');
         });
         
       } catch (error: any) {
@@ -244,7 +244,7 @@ export async function setupAuth(app: Express) {
     console.log(`🔐 Callback for domain: ${hostname}`);
     
     passport.authenticate(`replitauth:${hostname}`, {
-      successReturnToOrRedirect: "/dashboard",
+      successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
   });
