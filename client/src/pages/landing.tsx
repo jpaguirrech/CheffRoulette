@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +18,6 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
-  const [showSignup, setShowSignup] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
@@ -32,14 +30,17 @@ export default function Landing() {
               <h1 className="text-xl font-bold text-gray-900">Chef Roulette</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => setShowSignup(false)}>
-                Sign In
+              <Button 
+                variant="ghost" 
+                onClick={() => window.location.href = '/api/login'}
+              >
+                Iniciar Sesión
               </Button>
               <Button 
                 className="bg-green-600 hover:bg-green-700"
-                onClick={() => setShowSignup(true)}
+                onClick={() => window.location.href = '/api/login'}
               >
-                Get Started
+                Comenzar
               </Button>
             </div>
           </div>
@@ -63,7 +64,7 @@ export default function Landing() {
                 className="bg-green-600 hover:bg-green-700 text-lg px-8 py-3"
                 onClick={() => window.location.href = '/api/login'}
               >
-                Start Capturing Recipes
+                Comenzar a Capturar Recetas
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button 
@@ -252,9 +253,9 @@ export default function Landing() {
                 <Button 
                   className="w-full mt-6" 
                   variant="outline"
-                  onClick={() => setShowSignup(true)}
+                  onClick={() => window.location.href = '/api/login'}
                 >
-                  Start Free
+                  Comenzar Gratis
                 </Button>
               </CardContent>
             </Card>
@@ -294,9 +295,9 @@ export default function Landing() {
                 </ul>
                 <Button 
                   className="w-full mt-6 bg-orange-600 hover:bg-orange-700"
-                  onClick={() => setShowSignup(true)}
+                  onClick={() => window.location.href = '/api/login'}
                 >
-                  Upgrade to Pro
+                  Actualizar a Pro
                 </Button>
               </CardContent>
             </Card>
@@ -316,9 +317,9 @@ export default function Landing() {
           <Button 
             size="lg" 
             className="bg-white text-orange-600 hover:bg-gray-100 text-lg px-8 py-3"
-            onClick={() => setShowSignup(true)}
+            onClick={() => window.location.href = '/api/login'}
           >
-            Start Your Free Account
+            Crear Cuenta Gratuita
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
         </div>
@@ -372,32 +373,6 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* Auth Modal Placeholder */}
-      {showSignup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold mb-4">Create Your Account</h3>
-            <p className="text-gray-600 mb-6">
-              Authentication will be implemented with social login options
-            </p>
-            <div className="space-y-3">
-              <Button className="w-full bg-orange-600 hover:bg-orange-700">
-                Sign Up with Google
-              </Button>
-              <Button className="w-full" variant="outline">
-                Sign Up with Email
-              </Button>
-            </div>
-            <Button 
-              className="w-full mt-4" 
-              variant="ghost"
-              onClick={() => setShowSignup(false)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
