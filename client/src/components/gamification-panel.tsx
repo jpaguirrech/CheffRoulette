@@ -22,7 +22,7 @@ export default function GamificationPanel({ user }: GamificationPanelProps) {
 
   return (
     <Card className="mb-6">
-      <CardHeader>
+      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg">
         <CardTitle className="text-xl font-display font-bold text-gray-900">
           Your Progress
         </CardTitle>
