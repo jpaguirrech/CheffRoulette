@@ -143,6 +143,14 @@ export const insertExtractedRecipeSchema = createInsertSchema(extractedRecipes).
   createdAt: true,
 });
 
+export const updateExtractedRecipeSchema = createInsertSchema(extractedRecipes).omit({
+  id: true,
+  socialMediaContentId: true,
+  createdAt: true,
+  status: true,
+  aiConfidenceScore: true,
+}).partial();
+
 // Legacy recipe schema
 export const insertRecipeSchema = createInsertSchema(recipes).omit({
   id: true,
@@ -175,6 +183,7 @@ export type SocialMediaContent = typeof socialMediaContent.$inferSelect;
 export type InsertSocialMediaContent = z.infer<typeof insertSocialMediaContentSchema>;
 export type ExtractedRecipe = typeof extractedRecipes.$inferSelect;
 export type InsertExtractedRecipe = z.infer<typeof insertExtractedRecipeSchema>;
+export type UpdateExtractedRecipe = z.infer<typeof updateExtractedRecipeSchema>;
 
 // Legacy types
 export type Recipe = typeof recipes.$inferSelect;

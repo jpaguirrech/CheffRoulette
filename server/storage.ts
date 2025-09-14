@@ -5,7 +5,7 @@ import {
   type Challenge, type InsertChallenge, type UserChallenge, type InsertUserChallenge,
   type UserRecipeAction, type InsertUserRecipeAction,
   type SocialMediaContent, type InsertSocialMediaContent,
-  type ExtractedRecipe, type InsertExtractedRecipe
+  type ExtractedRecipe, type InsertExtractedRecipe, type UpdateExtractedRecipe
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -33,6 +33,7 @@ export interface IStorage {
   getExtractedRecipeByContentId(contentId: string): Promise<ExtractedRecipe | undefined>;
   getUserExtractedRecipes(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe[]>;
   getRandomExtractedRecipe(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe | undefined>;
+  updateExtractedRecipe(id: string, updates: Partial<ExtractedRecipe>): Promise<ExtractedRecipe | undefined>;
   
   // Legacy Recipe operations
   getRecipe(id: number): Promise<Recipe | undefined>;

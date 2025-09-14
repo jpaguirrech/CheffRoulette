@@ -108,6 +108,14 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  async updateExtractedRecipe(id: string, updates: Partial<ExtractedRecipe>): Promise<ExtractedRecipe | undefined> {
+    const result = await db.update(extractedRecipes)
+      .set(updates)
+      .where(eq(extractedRecipes.id, id))
+      .returning();
+    return result[0];
+  }
+
   async getUserExtractedRecipes(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe[]> {
     let query = db.select({
       id: extractedRecipes.id,

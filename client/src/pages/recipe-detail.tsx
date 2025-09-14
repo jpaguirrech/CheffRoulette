@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Clock, Users, Heart, Bookmark, Share2, CheckCircle, ExternalLink, Play } from "lucide-react";
+import { ArrowLeft, Clock, Users, Heart, Bookmark, Share2, CheckCircle, ExternalLink, Play, Edit } from "lucide-react";
 import { SiTiktok, SiInstagram, SiYoutube, SiPinterest, SiFacebook, SiX } from "react-icons/si";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import RecipeEditModal from "@/components/recipe-edit-modal";
 import type { Recipe } from "@shared/schema";
 
 // Platform logo mapping
@@ -59,6 +61,7 @@ export default function RecipeDetail() {
   const { id } = useParams();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Get authenticated user
   const { user } = useAuth();
@@ -163,6 +166,14 @@ export default function RecipeDetail() {
                 data-testid={`button-share-${recipe.id}`}
               >
                 <Share2 className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditModalOpen(true)}
+                data-testid={`button-edit-${recipe.id}`}
+              >
+                <Edit className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -314,6 +325,13 @@ export default function RecipeDetail() {
           </div>
         </div>
       </div>
+
+      {/* Recipe Edit Modal */}
+      <RecipeEditModal
+        recipe={recipe}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      />
     </div>
   );
 }

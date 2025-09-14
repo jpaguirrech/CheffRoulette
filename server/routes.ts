@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./postgres-storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import session from "express-session";
-import { insertRecipeSchema, insertUserRecipeActionSchema } from "@shared/schema";
+import { insertRecipeSchema, insertUserRecipeActionSchema, updateExtractedRecipeSchema } from "@shared/schema";
 import { z } from "zod";
 import { captureRecipeFromURL, getUserRecipes, getRecipeDetails, getRandomRecipe } from "./new-routes";
 import { getUserExtractedRecipes, getExtractedRecipeDetails, getRandomExtractedRecipe } from "./neon-routes";
@@ -395,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update recipe
+  // Update legacy recipe
   app.patch("/api/recipes/:id", async (req, res) => {
     try {
       const recipeId = parseInt(req.params.id);
@@ -408,6 +408,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(recipe);
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Update extracted recipe (UUID-based)
+  app.patch("/api/extracted-recipes/:id", isAuthenticated, async (req, res) => {
+    try {
+      const authenticatedUserId = req.user?.claims?.sub;
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const recipeId = req.params.id;
+      
+      // Get the recipe to verify ownership
+      const existingRecipe = await storage.getExtractedRecipe(recipeId);
+      if (!existingRecipe) {
+        return res.status(404).json({ message: "Recipe not found" });
+      }
+
+      // Check ownership through social media content
+      const content = await storage.getSocialMediaContent(existingRecipe.socialMediaContentId);
+      if (!content || content.userId !== authenticatedUserId) {
+        return res.status(403).json({ message: "Access denied - you can only edit your own recipes" });
+      }
+
+      // Parse and validate updates
+      const updates = updateExtractedRecipeSchema.parse(req.body);
+      
+      const updatedRecipe = await storage.updateExtractedRecipe(recipeId, updates);
+      
+      if (!updatedRecipe) {
+        return res.status(404).json({ message: "Recipe not found" });
+      }
+      
+      res.json(updatedRecipe);
+    } catch (error) {
+      console.error("Error updating extracted recipe:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid recipe data", errors: error.errors });
+      }
       res.status(500).json({ message: "Internal server error" });
     }
   });
