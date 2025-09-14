@@ -26,8 +26,13 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   
+  // Require SESSION_SECRET in production
+  if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+    throw new Error('SESSION_SECRET environment variable is required in production');
+  }
+  
   // For development, use memory store to avoid database connection issues
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  const isDevelopment = process.env.NODE_ENV === 'development';
   if (isDevelopment) {
     console.log('🔧 Using memory store for sessions in development');
     return session({
@@ -53,7 +58,7 @@ export function getSession() {
   });
   
   return session({
-    secret: process.env.SESSION_SECRET || 'dev-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -61,7 +66,7 @@ export function getSession() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
-      sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+      sameSite: 'lax',
     },
   });
 }
@@ -94,10 +99,10 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Development fallback authentication
-  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  // Development fallback authentication - ONLY in development
+  const isDevelopment = process.env.NODE_ENV === 'development';
   if (isDevelopment) {
-    console.log('🔧 Setting up development authentication fallback');
+    console.log('🚨 Development authentication fallback enabled - NOT for production');
     
     app.get('/api/auth/dev-login', async (req, res) => {
       try {
@@ -144,9 +149,19 @@ export async function setupAuth(app: Express) {
   let config;
   try {
     config = await getOidcConfig();
-  } catch (error) {
-    console.warn('⚠️ OIDC configuration failed, using development mode only:', error.message);
-    return; // Skip OAuth setup if OIDC fails
+  } catch (error: any) {
+    console.error('❌ OIDC configuration failed:', error.message);
+    
+    // In production, we should fail fast rather than silently disable auth
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚨 OIDC failure in production - authentication will be limited to Google OAuth only');
+      console.error('🔧 Please check REPL_ID and ISSUER_URL environment variables');
+      // Don't return - continue with Google OAuth setup
+    } else {
+      console.warn('⚠️ OIDC configuration failed in development, continuing with available auth methods');
+    }
+    
+    config = null; // Set to null to skip OIDC strategy setup but continue with other auth
   }
 
   const verify: VerifyFunction = async (
@@ -159,31 +174,36 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  // Get all possible domains (development and production)
-  const domains = process.env.REPLIT_DOMAINS!.split(",");
-  
-  // Add production domain if not already included
-  const productionDomain = "ai-company.co";
-  if (!domains.includes(productionDomain)) {
-    domains.push(productionDomain);
-  }
-  
-  console.log(`🔧 Setting up authentication for domains: ${domains.join(', ')}`);
-  console.log(`🔧 REPL_ID: ${process.env.REPL_ID}`);
-  console.log(`🔧 Production domain included: ${domains.includes(productionDomain)}`);
-  
-  
-  for (const domain of domains) {
-    const strategy = new Strategy(
-      {
-        name: `replitauth:${domain}`,
-        config,
-        scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
-      },
-      verify,
-    );
-    passport.use(strategy);
+  // Only set up OIDC strategies if config is available
+  if (config) {
+    // Get all possible domains (development and production)
+    const domains = process.env.REPLIT_DOMAINS!.split(",");
+    
+    // Add production domain if not already included
+    const productionDomain = "ai-company.co";
+    if (!domains.includes(productionDomain)) {
+      domains.push(productionDomain);
+    }
+    
+    console.log(`🔧 Setting up OIDC authentication for domains: ${domains.join(', ')}`);
+    console.log(`🔧 REPL_ID: ${process.env.REPL_ID}`);
+    console.log(`🔧 Production domain included: ${domains.includes(productionDomain)}`);
+    
+    
+    for (const domain of domains) {
+      const strategy = new Strategy(
+        {
+          name: `replitauth:${domain}`,
+          config,
+          scope: "openid email profile offline_access",
+          callbackURL: `https://${domain}/api/callback`,
+        },
+        verify,
+      );
+      passport.use(strategy);
+    }
+  } else {
+    console.warn('⚠️ Skipping OIDC strategy setup due to configuration failure');
   }
 
   // Google OAuth Strategy
@@ -206,7 +226,8 @@ export async function setupAuth(app: Express) {
               picture: profile.photos?.[0]?.value,
             },
             access_token: accessToken,
-            refresh_token: refreshToken
+            refresh_token: refreshToken,
+            expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
           };
           
           await upsertUser(user.claims);
@@ -223,7 +244,7 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     // In development, redirect to dev login
-    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+    const isDevelopment = process.env.NODE_ENV === 'development';
     if (isDevelopment) {
       return res.redirect('/api/auth/dev-login');
     }
@@ -232,6 +253,12 @@ export async function setupAuth(app: Express) {
     const hostname = req.hostname === 'ai-company.co' ? 'ai-company.co' : req.hostname;
     console.log(`🔐 Login attempt for domain: ${hostname}`);
     
+    // If OIDC config failed, redirect to Google OAuth instead
+    if (!config) {
+      console.log('🔀 OIDC unavailable, redirecting to Google OAuth');
+      return res.redirect('/api/google/login');
+    }
+    
     passport.authenticate(`replitauth:${hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
@@ -239,6 +266,12 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
+    // Skip OIDC callback if config is not available
+    if (!config) {
+      console.log('🔀 OIDC unavailable, redirecting to Google OAuth');
+      return res.redirect('/api/google/login');
+    }
+    
     // Get the correct hostname - check for production domain
     const hostname = req.hostname === 'ai-company.co' ? 'ai-company.co' : req.hostname;
     console.log(`🔐 Callback for domain: ${hostname}`);
@@ -263,6 +296,12 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
+      // If OIDC config is not available, just redirect to home
+      if (!config) {
+        console.log('🔀 OIDC unavailable for logout, redirecting to home');
+        return res.redirect('/');
+      }
+      
       res.redirect(
         client.buildEndSessionUrl(config, {
           client_id: process.env.REPL_ID!,

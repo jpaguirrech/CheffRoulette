@@ -36,7 +36,8 @@ export default function Dashboard() {
   });
 
   const { data: challenges, isLoading: challengesLoading } = useQuery({
-    queryKey: ["/api/user/1/challenges"],
+    queryKey: [`/api/user/${user?.id}/challenges`],
+    enabled: !!user?.id,
   });
 
   const filteredRecipes = recipes?.filter(recipe => {
