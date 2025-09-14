@@ -1,7 +1,7 @@
 import { 
   users, recipes, challenges, userChallenges, userRecipeActions,
   socialMediaContent, extractedRecipes,
-  type User, type InsertUser, type Recipe, type InsertRecipe, 
+  type User, type InsertUser, type UpsertUser, type Recipe, type InsertRecipe, 
   type Challenge, type InsertChallenge, type UserChallenge, type InsertUserChallenge,
   type UserRecipeAction, type InsertUserRecipeAction,
   type SocialMediaContent, type InsertSocialMediaContent,
@@ -71,7 +71,7 @@ export interface ExtractedRecipeFilters {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User> = new Map();
+  private users: Map<string, User> = new Map();
   private recipes: Map<number, Recipe> = new Map();
   private challenges: Map<number, Challenge> = new Map();
   private userChallenges: Map<number, UserChallenge> = new Map();
@@ -90,16 +90,20 @@ export class MemStorage implements IStorage {
   private initializeData() {
     // Create default user
     const defaultUser: User = {
-      id: this.currentUserId++,
+      id: `user-${this.currentUserId++}`,
       username: "foodie_user",
       email: "user@example.com",
-      password: "hashedpassword",
+      firstName: null,
+      lastName: null,
+      profileImageUrl: null,
       points: 1247,
       streak: 7,
       recipesCooked: 23,
       weeklyPoints: 340,
       isPro: false,
       proExpiresAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.users.set(defaultUser.id, defaultUser);
 
@@ -264,11 +268,11 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
     const user = this.users.get(id);
     if (!user) return undefined;
     
-    const updatedUser = { ...user, ...updates };
+    const updatedUser = { ...user, ...updates, updatedAt: new Date() };
     this.users.set(id, updatedUser);
     return updatedUser;
   }

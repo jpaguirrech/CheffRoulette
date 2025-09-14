@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   recipesCooked: integer("recipes_cooked").default(0),
   weeklyPoints: integer("weekly_points").default(0),
   isPro: boolean("is_pro").default(false),
+  proExpiresAt: timestamp("pro_expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

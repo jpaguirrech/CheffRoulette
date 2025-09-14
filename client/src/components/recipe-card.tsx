@@ -3,6 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Users, Heart, Bookmark, Share2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import type { Recipe } from "@shared/schema";
 
 interface RecipeCardProps {
@@ -10,6 +14,39 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const recordActionMutation = useMutation({
+    mutationFn: async (action: string) => {
+      if (!user?.id) {
+        throw new Error("User not authenticated");
+      }
+      return await apiRequest("POST", "/api/user-actions", {
+        recipeId: recipe.id,
+        action,
+      });
+    },
+    onSuccess: (_, action) => {
+      toast({
+        title: "Action recorded",
+        description: `Recipe ${action} successfully!`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Please sign in to interact with recipes",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleAction = (action: string) => {
+    recordActionMutation.mutate(action);
+  };
+
   const getPlatformIcon = (platform: string) => {
     switch (platform?.toLowerCase()) {
       case 'tiktok':
@@ -25,7 +62,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
+  const getDifficultyColor = (difficulty: string | null) => {
     switch (difficulty?.toLowerCase()) {
       case 'easy':
         return 'bg-green-100 text-green-800';
@@ -69,8 +106,19 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
             )}
           </div>
           <div className="flex items-center space-x-1 text-xs text-gray-500">
-            <Heart className="w-3 h-3" />
-            <span>{recipe.likes}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-0 h-auto hover:bg-transparent"
+              onClick={(e) => {
+                e.preventDefault();
+                handleAction("liked");
+              }}
+              data-testid={`button-like-${recipe.id}`}
+            >
+              <Heart className="w-3 h-3 hover:text-red-500 transition-colors" />
+            </Button>
+            <span>{recipe.likes || 0}</span>
           </div>
         </div>
         
@@ -95,7 +143,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           <Badge variant="secondary" className="bg-[hsl(14,100%,60%,0.1)] text-[hsl(14,100%,60%)]">
             {recipe.cuisine}
           </Badge>
-          <Badge variant="outline" className={getDifficultyColor(recipe.difficulty)}>
+          <Badge variant="outline" className={getDifficultyColor(recipe.difficulty || 'medium')}>
             {recipe.difficulty}
           </Badge>
           <Badge variant="outline" className="bg-[hsl(52,100%,70%,0.1)] text-gray-700">
@@ -120,10 +168,28 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="sm" className="p-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-1"
+              onClick={(e) => {
+                e.preventDefault();
+                handleAction("bookmarked");
+              }}
+              data-testid={`button-bookmark-${recipe.id}`}
+            >
               <Bookmark className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="p-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-1"
+              onClick={(e) => {
+                e.preventDefault();
+                handleAction("shared");
+              }}
+              data-testid={`button-share-${recipe.id}`}
+            >
               <Share2 className="w-4 h-4" />
             </Button>
           </div>

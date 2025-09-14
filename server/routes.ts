@@ -415,9 +415,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // This route was moved above to fix ordering issue
 
   // Record user action (like, bookmark, cook, share)
-  app.post("/api/user-actions", async (req, res) => {
+  app.post("/api/user-actions", isAuthenticated, async (req, res) => {
     try {
-      const actionData = insertUserRecipeActionSchema.parse(req.body);
+      // Get authenticated user ID from session - NEVER trust client userId
+      const authenticatedUserId = req.user?.claims?.sub;
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Parse request body but override userId with authenticated user
+      const { userId: _, ...requestData } = req.body; // Remove client userId
+      const actionData = insertUserRecipeActionSchema.parse({
+        ...requestData,
+        userId: authenticatedUserId
+      });
       const action = await storage.recordUserAction(actionData);
       
       // Update user stats based on action

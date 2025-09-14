@@ -9,6 +9,7 @@ import { SiTiktok, SiInstagram, SiYoutube, SiPinterest, SiFacebook, SiX } from "
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import type { Recipe } from "@shared/schema";
 
 // Platform logo mapping
@@ -59,14 +60,19 @@ export default function RecipeDetail() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  // Get authenticated user
+  const { user } = useAuth();
+
   const { data: recipe, isLoading } = useQuery<Recipe>({
     queryKey: [`/api/recipes/${id}`],
   });
 
   const recordActionMutation = useMutation({
     mutationFn: async (action: string) => {
+      if (!user?.id) {
+        throw new Error("User not authenticated");
+      }
       return await apiRequest("POST", "/api/user-actions", {
-        userId: 1, // Mock user ID
         recipeId: parseInt(id!),
         action,
       });
@@ -77,6 +83,14 @@ export default function RecipeDetail() {
         description: `Recipe ${action} successfully!`,
       });
       queryClient.invalidateQueries({ queryKey: [`/api/recipes/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Please sign in to interact with recipes",
+        variant: "destructive",
+      });
     },
   });
 
@@ -129,14 +143,16 @@ export default function RecipeDetail() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleAction("liked")}
+                data-testid={`button-like-${recipe.id}`}
               >
                 <Heart className="w-4 h-4 mr-1" />
-                {recipe.likes}
+                {recipe.likes || 0}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleAction("bookmarked")}
+                data-testid={`button-bookmark-${recipe.id}`}
               >
                 <Bookmark className="w-4 h-4" />
               </Button>
@@ -144,6 +160,7 @@ export default function RecipeDetail() {
                 variant="ghost"
                 size="sm"
                 onClick={() => handleAction("shared")}
+                data-testid={`button-share-${recipe.id}`}
               >
                 <Share2 className="w-4 h-4" />
               </Button>
@@ -288,6 +305,7 @@ export default function RecipeDetail() {
                 size="lg" 
                 className="bg-[hsl(174,60%,51%)] hover:bg-[hsl(174,60%,46%)]"
                 onClick={() => handleAction("cooked")}
+                data-testid={`button-cook-${recipe.id}`}
               >
                 <CheckCircle className="w-5 h-5 mr-2" />
                 Mark as Cooked
