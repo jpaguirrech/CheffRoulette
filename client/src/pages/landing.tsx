@@ -328,8 +328,8 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2">
               <div className="flex items-center mb-4">
                 <ChefHat className="w-6 h-6 mr-2" />
                 <h3 className="text-lg font-bold">Chef Roulette</h3>
@@ -339,30 +339,23 @@ export default function Landing() {
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Features</li>
-                <li>Pricing</li>
-                <li>API</li>
-                <li>Mobile App</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>Help Center</li>
-                <li>Community</li>
-                <li>Contact</li>
-                <li>Status</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>About</li>
-                <li>Blog</li>
-                <li>Careers</li>
-                <li>Privacy</li>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a href="/about" className="text-gray-400 hover:text-white transition-colors">
+                    About Us
+                  </a>
+                </li>
+                <li>
+                  <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms" className="text-gray-400 hover:text-white transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
