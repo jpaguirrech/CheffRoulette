@@ -17,8 +17,6 @@ export default function Navigation({ user, onUpgradeClick }: NavigationProps) {
   const navigationItems = [
     { name: "Discover", href: "/", current: location === "/" },
     { name: "My Recipes", href: "/my-recipes", current: location === "/my-recipes" },
-    { name: "Challenges", href: "/challenges", current: location === "/challenges" },
-    { name: "Community", href: "/community", current: location === "/community" },
   ];
 
   return (
