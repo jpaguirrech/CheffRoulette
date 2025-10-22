@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // This route was moved above to fix ordering issue
 
   // Record user action (like, bookmark, cook, share)
-  app.post("/api/user-actions", isAuthenticated, async (req, res) => {
+  app.post("/api/user-actions", async (req, res) => {
     try {
       // Get authenticated user ID from session - NEVER trust client userId
       let authenticatedUserId = req.user?.claims?.sub;
