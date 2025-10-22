@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Users, ChefHat, Star, X } from "lucide-react";
+import { Clock, Users, ChefHat, Star, X, Coffee, Soup, UtensilsCrossed, IceCream } from "lucide-react";
 import type { Recipe } from "@shared/schema";
 
 interface RouletteWheelProps {
@@ -19,12 +19,26 @@ interface RouletteWheelProps {
   };
 }
 
-export default function RouletteWheel({ filters }: RouletteWheelProps) {
+const MEAL_TYPE_FILTERS = [
+  { value: 'breakfast', label: 'Breakfast', icon: Coffee, color: 'bg-amber-500', emoji: '🌅' },
+  { value: 'lunch', label: 'Lunch', icon: Soup, color: 'bg-blue-500', emoji: '☀️' },
+  { value: 'dinner', label: 'Dinner', icon: UtensilsCrossed, color: 'bg-purple-500', emoji: '🌙' },
+  { value: 'dessert', label: 'Desserts', icon: IceCream, color: 'bg-pink-500', emoji: '🍰' },
+];
+
+export default function RouletteWheel({ filters: externalFilters }: RouletteWheelProps) {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Merge external filters with meal type filter
+  const filters = {
+    ...externalFilters,
+    category: selectedMealType || externalFilters?.category,
+  };
 
   const { data: randomRecipe, refetch } = useQuery<Recipe>({
     queryKey: ["/api/recipes/random", filters],
@@ -57,17 +71,17 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
           setIsSpinning(false);
           setShowRecipeModal(true);
           toast({
-            title: "Recipe Selected!",
-            description: `You got: ${result.data.title}`,
+            title: "¡Receta Seleccionada!",
+            description: `Has obtenido: ${result.data.title}`,
           });
-        }, 2000);
+        }, 3000); // Increased to 3 seconds for better animation
       }
     } catch (error) {
       setIsSpinning(false);
       console.error('Roulette error:', error);
       toast({
-        title: "No recipes found",
-        description: "Try adjusting your filters or add more recipes to your collection.",
+        title: "No se encontraron recetas",
+        description: "Intenta ajustar tus filtros o agregar más recetas a tu colección.",
         variant: "destructive",
       });
     }
@@ -91,59 +105,161 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="text-xl font-display font-bold text-gray-900">
+    <Card className="mb-6 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-2xl font-display font-bold text-gray-900 text-center flex items-center justify-center gap-2">
+          <span className="text-3xl">🎰</span>
           Recipe Roulette
+          <span className="text-3xl">🎰</span>
         </CardTitle>
+        <p className="text-center text-sm text-gray-600 mt-2">
+          ¡Gira la ruleta y descubre tu próxima aventura culinaria!
+        </p>
       </CardHeader>
       <CardContent>
+        {/* Meal Type Filters */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 text-center">
+            Selecciona el tipo de comida:
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {MEAL_TYPE_FILTERS.map((mealType) => {
+              const Icon = mealType.icon;
+              const isSelected = selectedMealType === mealType.value;
+              return (
+                <button
+                  key={mealType.value}
+                  data-testid={`filter-${mealType.value}`}
+                  onClick={() => setSelectedMealType(isSelected ? null : mealType.value)}
+                  className={`
+                    relative p-4 rounded-xl border-2 transition-all duration-300
+                    ${isSelected 
+                      ? `${mealType.color} border-transparent text-white shadow-lg scale-105 transform` 
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-green-300 hover:shadow-md'
+                    }
+                  `}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <span className="text-2xl">{mealType.emoji}</span>
+                    <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-gray-600'}`} />
+                    <span className="text-xs font-semibold">{mealType.label}</span>
+                  </div>
+                  {isSelected && (
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">✓</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {selectedMealType && (
+            <div className="mt-3 text-center">
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                Filtrando por: {MEAL_TYPE_FILTERS.find(m => m.value === selectedMealType)?.label}
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Roulette Wheel */}
         <div className="text-center mb-6">
           <div className="relative inline-block">
-            <div className={`w-48 h-48 mx-auto chef-gradient rounded-full flex items-center justify-center shadow-lg transition-transform duration-2000 ${
-              isSpinning ? "roulette-spin" : ""
-            }`}>
-              <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center relative">
-                {selectedRecipe ? (
-                  <div className="text-center">
-                    <div className="text-2xl mb-2">🍽️</div>
-                    <div className="text-xs font-medium text-gray-600 px-2">
-                      {selectedRecipe.title.substring(0, 20)}
-                      {selectedRecipe.title.length > 20 ? "..." : ""}
-                    </div>
+            {/* Decorative outer ring */}
+            <div className="absolute inset-0 -m-4">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 opacity-20 blur-xl animate-pulse"></div>
+            </div>
+            
+            {/* Main wheel container */}
+            <div className="relative z-10">
+              <div className={`
+                w-64 h-64 mx-auto rounded-full flex items-center justify-center
+                transition-all duration-3000 ease-out relative
+                ${isSpinning ? "roulette-spin-enhanced" : ""}
+              `}>
+                {/* Colorful wheel segments */}
+                <div className="absolute inset-0 rounded-full overflow-hidden shadow-2xl">
+                  <div className="w-full h-full relative roulette-wheel-segments">
+                    {/* Segment 1 - Breakfast */}
+                    <div className="absolute top-0 left-1/2 w-1/2 h-1/2 origin-bottom-left bg-gradient-to-br from-amber-400 to-amber-600 roulette-segment" style={{ transform: 'rotate(0deg)' }}></div>
+                    {/* Segment 2 - Lunch */}
+                    <div className="absolute top-0 left-1/2 w-1/2 h-1/2 origin-bottom-left bg-gradient-to-br from-blue-400 to-blue-600 roulette-segment" style={{ transform: 'rotate(90deg)' }}></div>
+                    {/* Segment 3 - Dinner */}
+                    <div className="absolute top-0 left-1/2 w-1/2 h-1/2 origin-bottom-left bg-gradient-to-br from-purple-400 to-purple-600 roulette-segment" style={{ transform: 'rotate(180deg)' }}></div>
+                    {/* Segment 4 - Dessert */}
+                    <div className="absolute top-0 left-1/2 w-1/2 h-1/2 origin-bottom-left bg-gradient-to-br from-pink-400 to-pink-600 roulette-segment" style={{ transform: 'rotate(270deg)' }}></div>
                   </div>
-                ) : (
-                  <svg className="w-12 h-12 text-[hsl(14,100%,60%)]" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                  </svg>
-                )}
-                {/* Pointer */}
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
-                  <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-[hsl(14,100%,60%)]" />
+                </div>
+
+                {/* Center circle with content */}
+                <div className="absolute inset-8 bg-white rounded-full flex items-center justify-center shadow-inner z-10">
+                  {selectedRecipe ? (
+                    <div className="text-center p-4 animate-bounce-in">
+                      <div className="text-4xl mb-2">🎉</div>
+                      <div className="text-sm font-bold text-gray-800 px-2 leading-tight">
+                        {selectedRecipe.title.substring(0, 30)}
+                        {selectedRecipe.title.length > 30 ? "..." : ""}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <ChefHat className={`w-16 h-16 mx-auto text-green-600 ${isSpinning ? 'animate-spin' : ''}`} />
+                      <div className="text-xs font-semibold text-gray-600 mt-2">
+                        {isSpinning ? "Girando..." : "¡Gira!"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pointer/Arrow at top */}
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
+                  <div className="relative">
+                    <div className="w-0 h-0 border-l-[16px] border-r-[16px] border-t-[24px] border-l-transparent border-r-transparent border-t-red-500 drop-shadow-lg"></div>
+                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+
+                {/* Decorative dots around wheel */}
+                <div className="absolute inset-0 roulette-dots">
+                  {[...Array(12)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+                      style={{
+                        top: '50%',
+                        left: '50%',
+                        transform: `rotate(${i * 30}deg) translateY(-140px)`,
+                      }}
+                    ></div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="mt-4 space-y-2">
+          <div className="mt-8 space-y-3">
             <Button 
+              data-testid="button-spin-wheel"
               onClick={handleSpin}
               disabled={isSpinning}
-              className="bg-[hsl(14,100%,60%)] hover:bg-[hsl(14,100%,55%)]"
+              size="lg"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-6 px-8 rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"/>
               </svg>
-              {isSpinning ? "Spinning..." : "Spin the Wheel!"}
+              {isSpinning ? "¡Girando la Ruleta...!" : "¡Girar la Ruleta!"}
             </Button>
             
-            {selectedRecipe && (
+            {selectedRecipe && !isSpinning && (
               <Button 
+                data-testid="button-view-selected-recipe"
                 onClick={handleViewRecipe}
                 variant="outline"
-                className="block w-full"
+                size="lg"
+                className="block w-full border-2 border-green-600 text-green-600 hover:bg-green-50 font-semibold"
               >
-                View Recipe
+                Ver Receta Completa →
               </Button>
             )}
           </div>
@@ -157,7 +273,7 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
             <div className="flex items-center justify-between">
               <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <div className="text-3xl">🎉</div>
-                Your Recipe is Ready!
+                ¡Tu Receta Está Lista!
               </DialogTitle>
               <Button
                 variant="ghost"
@@ -169,7 +285,7 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
               </Button>
             </div>
             <DialogDescription className="text-gray-600">
-              Here's what the roulette selected for you today
+              Esto es lo que la ruleta seleccionó para ti hoy
             </DialogDescription>
           </DialogHeader>
 
@@ -203,42 +319,42 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
               {/* Recipe Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <Clock className="w-5 h-5 mx-auto mb-1 text-[hsl(142,71%,45%)]" />
+                  <Clock className="w-5 h-5 mx-auto mb-1 text-green-600" />
                   <div className="text-sm font-medium text-gray-700">
                     {(selectedRecipe as any).totalTime || ((selectedRecipe as any).prepTime || 0) + (selectedRecipe.cookTime || 0)} min
                   </div>
-                  <div className="text-xs text-gray-500">Total Time</div>
+                  <div className="text-xs text-gray-500">Tiempo Total</div>
                 </div>
                 
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <Users className="w-5 h-5 mx-auto mb-1 text-[hsl(142,71%,45%)]" />
+                  <Users className="w-5 h-5 mx-auto mb-1 text-green-600" />
                   <div className="text-sm font-medium text-gray-700">
                     {selectedRecipe.servings}
                   </div>
-                  <div className="text-xs text-gray-500">Servings</div>
+                  <div className="text-xs text-gray-500">Porciones</div>
                 </div>
                 
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <ChefHat className="w-5 h-5 mx-auto mb-1 text-[hsl(142,71%,45%)]" />
+                  <ChefHat className="w-5 h-5 mx-auto mb-1 text-green-600" />
                   <div className="text-sm font-medium text-gray-700 capitalize">
                     {selectedRecipe.difficulty}
                   </div>
-                  <div className="text-xs text-gray-500">Difficulty</div>
+                  <div className="text-xs text-gray-500">Dificultad</div>
                 </div>
                 
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
-                  <Star className="w-5 h-5 mx-auto mb-1 text-[hsl(142,71%,45%)]" />
+                  <Star className="w-5 h-5 mx-auto mb-1 text-green-600" />
                   <div className="text-sm font-medium text-gray-700">
-                    {(selectedRecipe as any).cuisine || 'International'}
+                    {(selectedRecipe as any).cuisine || 'Internacional'}
                   </div>
-                  <div className="text-xs text-gray-500">Cuisine</div>
+                  <div className="text-xs text-gray-500">Cocina</div>
                 </div>
               </div>
 
               {/* Quick Preview */}
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Quick Preview</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">Vista Rápida</h4>
                   <div className="flex flex-wrap gap-2">
                     {((selectedRecipe as any).dietaryTags || [])?.slice(0, 4).map((tag: string, index: number) => (
                       <Badge key={index} variant="outline" className="text-xs">
@@ -250,7 +366,7 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
                 
                 <div>
                   <h5 className="text-sm font-medium text-gray-700 mb-1">
-                    Key Ingredients ({selectedRecipe.ingredients?.length || 0})
+                    Ingredientes Principales ({selectedRecipe.ingredients?.length || 0})
                   </h5>
                   <p className="text-sm text-gray-600">
                     {selectedRecipe.ingredients?.slice(0, 3).map(ing => 
@@ -265,6 +381,7 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
 
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-6">
             <Button 
+              data-testid="button-spin-again"
               variant="outline" 
               onClick={handleSpinAgain}
               className="w-full sm:w-auto"
@@ -272,13 +389,14 @@ export default function RouletteWheel({ filters }: RouletteWheelProps) {
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z"/>
               </svg>
-              Spin Again
+              Girar de Nuevo
             </Button>
             <Button 
+              data-testid="button-cook-recipe"
               onClick={handleViewRecipe}
-              className="bg-[hsl(142,71%,45%)] hover:bg-[hsl(142,71%,40%)] w-full sm:w-auto"
+              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
             >
-              Let's Cook This! →
+              ¡Vamos a Cocinar! →
             </Button>
           </DialogFooter>
         </DialogContent>
