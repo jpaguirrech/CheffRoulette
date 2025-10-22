@@ -181,12 +181,12 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {recentRecipes.map((recipe, index) => (
                     <div key={recipe.id}>
                       <RecipeCard recipe={recipe} />
-                      {/* Show ad after first recipe for free users */}
-                      {index === 0 && !user?.isPro && (
+                      {/* Show ad after first and third recipe for free users */}
+                      {(index === 0 || index === 2) && !user?.isPro && (
                         <div className="mt-6">
                           <AdBanner 
                             type="responsive" 
