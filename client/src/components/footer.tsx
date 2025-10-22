@@ -20,24 +20,18 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/about">
-                  <a className="text-gray-400 hover:text-white transition-colors cursor-pointer">
-                    About Us
-                  </a>
+                <Link href="/about" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                  About Us
                 </Link>
               </li>
               <li>
-                <Link href="/privacy">
-                  <a className="text-gray-400 hover:text-white transition-colors cursor-pointer">
-                    Privacy Policy
-                  </a>
+                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                  Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms">
-                  <a className="text-gray-400 hover:text-white transition-colors cursor-pointer">
-                    Terms of Service
-                  </a>
+                <Link href="/terms" className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                  Terms of Service
                 </Link>
               </li>
             </ul>
