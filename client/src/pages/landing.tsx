@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import Footer from "@/components/footer";
 import { 
   ChefHat, 
   Smartphone, 
@@ -326,45 +326,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center mb-4">
-                <ChefHat className="w-6 h-6 mr-2" />
-                <h3 className="text-lg font-bold">Chef Roulette</h3>
-              </div>
-              <p className="text-gray-400">
-                Transform your social media food discoveries into organized, cookable recipes.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="/about" className="text-gray-400 hover:text-white transition-colors">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <Separator className="my-8 bg-gray-800" />
-          <div className="text-center text-gray-400">
-            <p>&copy; 2025 Chef Roulette. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
     </div>
   );

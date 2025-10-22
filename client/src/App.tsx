@@ -12,6 +12,9 @@ import Dashboard from "@/pages/dashboard";
 import RecipeDetail from "@/pages/recipe-detail";
 import MyRecipes from "@/pages/my-recipes";
 import Profile from "@/pages/profile";
+import About from "@/pages/about";
+import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import type { User } from "@shared/schema";
@@ -37,6 +40,9 @@ function Router() {
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/demo" component={Dashboard} />
+        <Route path="/about" component={About} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
         <Route component={Landing} />
       </Switch>
     );
@@ -49,6 +55,9 @@ function Router() {
       <Route path="/my-recipes" component={MyRecipes} />
       <Route path="/profile" component={Profile} />
       <Route path="/recipe/:id" component={RecipeDetail} />
+      <Route path="/about" component={About} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
       <Route component={NotFound} />
     </Switch>
   );
