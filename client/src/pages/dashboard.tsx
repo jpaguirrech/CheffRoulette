@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
+import Footer from "@/components/footer";
 import RouletteWheel from "@/components/roulette-wheel";
 import RecipeCard from "@/components/recipe-card";
 import RecipeCapture from "@/components/recipe-capture";
@@ -292,6 +293,9 @@ export default function Dashboard() {
         onClose={() => setShowSubscriptionModal(false)}
         user={user}
       />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

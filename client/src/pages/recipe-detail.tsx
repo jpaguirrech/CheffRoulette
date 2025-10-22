@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import Footer from "@/components/footer";
 import { ArrowLeft, Clock, Users, Heart, Bookmark, Share2, CheckCircle, ExternalLink, Play, Edit } from "lucide-react";
 import { SiTiktok, SiInstagram, SiYoutube, SiPinterest, SiFacebook, SiX } from "react-icons/si";
 import { queryClient } from "@/lib/queryClient";
@@ -332,6 +333,9 @@ export default function RecipeDetail() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
       />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

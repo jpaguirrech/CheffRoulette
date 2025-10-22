@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import Footer from "@/components/footer";
 import ProfileSettings from "@/components/profile-settings";
 import { Link } from "wouter";
 import type { User } from "@shared/schema";
@@ -78,6 +79,8 @@ export default function Profile() {
 
         <ProfileSettings user={user} />
       </div>
+
+      <Footer />
     </div>
   );
 }
