@@ -271,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: 'dev@chef-roulette.com',
           firstName: 'Developer',
           lastName: 'User',
-          profileImageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+          profileImageUrl: 'https://robohash.org/chef-marco.png?set=set5&size=150x150',
           username: null,
           points: 150,
           streak: 5,
