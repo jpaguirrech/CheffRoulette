@@ -162,7 +162,7 @@ export async function setupAuth(app: Express) {
       done(null, user);
     } catch (error: any) {
       console.error('❌ Google OAuth error:', error);
-      done(error, null);
+      done(error, undefined);
     }
   }));
 
@@ -189,7 +189,7 @@ export async function setupAuth(app: Express) {
     console.log('🔐 Google OAuth callback received');
     console.log('Query params:', req.query);
     
-    passport.authenticate('google', (err, user, info) => {
+    passport.authenticate('google', (err: any, user: any, info: any) => {
       if (err) {
         console.error('❌ Google OAuth authentication error:', err);
         return res.status(500).send(`Authentication failed: ${err.message}`);
