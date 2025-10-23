@@ -266,20 +266,50 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/callback", (req, res, next) => {
-    // Skip OIDC callback if config is not available
-    if (!config) {
-      console.log('🔀 OIDC unavailable, redirecting to Google OAuth');
-      return res.redirect('/api/google/login');
+    try {
+      // Skip OIDC callback if config is not available
+      if (!config) {
+        console.log('🔀 OIDC unavailable, redirecting to Google OAuth');
+        return res.redirect('/api/google/login');
+      }
+      
+      // Get the correct hostname - check for production domain
+      const hostname = req.hostname === 'ai-company.co' ? 'ai-company.co' : req.hostname;
+      console.log(`🔐 Callback for domain: ${hostname}`);
+      console.log(`🔐 Strategy name: replitauth:${hostname}`);
+      
+      passport.authenticate(`replitauth:${hostname}`, (err, user, info) => {
+        if (err) {
+          console.error('❌ Authentication error in callback:', err);
+          console.error('Error details:', {
+            message: err.message,
+            stack: err.stack,
+            hostname,
+            query: req.query
+          });
+          return res.status(500).send(`Authentication failed: ${err.message}`);
+        }
+        
+        if (!user) {
+          console.error('❌ No user returned from authentication');
+          console.error('Info:', info);
+          return res.redirect("/api/login");
+        }
+        
+        req.logIn(user, (loginErr) => {
+          if (loginErr) {
+            console.error('❌ Login error:', loginErr);
+            return res.status(500).send(`Login failed: ${loginErr.message}`);
+          }
+          console.log('✅ User authenticated successfully');
+          return res.redirect("/");
+        });
+      })(req, res, next);
+    } catch (error: any) {
+      console.error('❌ Callback route error:', error);
+      console.error('Error stack:', error.stack);
+      res.status(500).send(`Callback error: ${error.message}`);
     }
-    
-    // Get the correct hostname - check for production domain
-    const hostname = req.hostname === 'ai-company.co' ? 'ai-company.co' : req.hostname;
-    console.log(`🔐 Callback for domain: ${hostname}`);
-    
-    passport.authenticate(`replitauth:${hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
-    })(req, res, next);
   });
 
   // Google OAuth routes
