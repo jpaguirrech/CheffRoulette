@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./postgres-storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./googleAuth";
 import session from "express-session";
 import { insertRecipeSchema, insertUserRecipeActionSchema, updateExtractedRecipeSchema } from "@shared/schema";
 import { z } from "zod";
@@ -239,18 +239,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', async (req: any, res) => {
     try {
       // Check if user is actually authenticated (even in development)
-      const userId = req.user?.claims?.sub;
+      const userId = (req.user as any)?.id;
       
       if (userId && userId !== 'dev-user-123') {
         // Real authenticated user
         console.log(`👤 Authenticated user: ${userId}`);
         const realUser = {
           id: userId,
-          email: req.user?.claims?.email || 'user@chef-roulette.com',
-          firstName: req.user?.claims?.given_name || 'User',
-          lastName: req.user?.claims?.family_name || '',
-          profileImageUrl: req.user?.claims?.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          username: req.user?.claims?.preferred_username || null,
+          email: (req.user as any)?.email || 'user@chef-roulette.com',
+          firstName: (req.user as any)?.first_name || 'User',
+          lastName: (req.user as any)?.last_name || '',
+          profileImageUrl: (req.user as any)?.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+          username: (req.user as any)?.username || null,
           points: 0, // New user starts with 0 points
           streak: 0,
           recipesCooked: 0,
@@ -305,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/user/:id', async (req: any, res) => {
     try {
       const userId = req.params.id;
-      const currentUserId = req.user?.claims?.sub || 'dev-user-123';
+      const currentUserId = (req.user as any)?.id || 'dev-user-123';
       
       // Ensure user can only update their own profile
       if (userId !== currentUserId) {
@@ -415,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update extracted recipe (UUID-based)
   app.patch("/api/extracted-recipes/:id", isAuthenticated, async (req, res) => {
     try {
-      const authenticatedUserId = req.user?.claims?.sub;
+      const authenticatedUserId = (req.user as any)?.id;
       if (!authenticatedUserId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/user-actions", async (req, res) => {
     try {
       // Get authenticated user ID from session - NEVER trust client userId
-      let authenticatedUserId = req.user?.claims?.sub;
+      let authenticatedUserId = (req.user as any)?.id;
       
       // Development fallback
       if (!authenticatedUserId) {
@@ -545,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { url, recipeName } = urlCaptureSchema.parse(req.body);
       // For development, use a default user ID if not authenticated
-      let userId = req.user?.claims?.sub;
+      let userId = (req.user as any)?.id;
       if (!userId) {
         userId = 'dev-user-123'; // Default development user
         console.log('🔧 Using default development user for testing');
@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const neonRoutes = await import('./neon-routes');
           // Get the authenticated user ID from the request context
-          const currentUserId = req.user?.claims?.sub || 'dev-user-123';
+          const currentUserId = (req.user as any)?.id || 'dev-user-123';
           const recentRecipes = await neonRoutes.getUserRecentRecipes(currentUserId, 1); // Get 1 most recent recipe
           
           if (recentRecipes && recentRecipes.length > 0) {
