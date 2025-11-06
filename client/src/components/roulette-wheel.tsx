@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Users, ChefHat, Star, X, Coffee, Soup, UtensilsCrossed, IceCream } from "lucide-react";
+import { Clock, Users, ChefHat, Star, Coffee, Soup, UtensilsCrossed, IceCream } from "lucide-react";
 import type { Recipe } from "@shared/schema";
 
 interface RouletteWheelProps {
@@ -270,20 +270,10 @@ export default function RouletteWheel({ filters: externalFilters }: RouletteWhee
       <Dialog open={showRecipeModal} onOpenChange={setShowRecipeModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <div className="text-3xl">🎉</div>
-                ¡Tu Receta Está Lista!
-              </DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCloseModal}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <div className="text-3xl">🎉</div>
+              ¡Tu Receta Está Lista!
+            </DialogTitle>
             <DialogDescription className="text-gray-600">
               Esto es lo que la ruleta seleccionó para ti hoy
             </DialogDescription>
