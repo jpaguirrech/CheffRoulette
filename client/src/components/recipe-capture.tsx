@@ -164,7 +164,7 @@ export default function RecipeCapture() {
               </div>
               <div className="flex items-center space-x-2 text-lg">
                 <span>🎵</span>
-                <span>📹</span>
+                <span>📸</span>
                 <span>🎥</span>
                 <span>📌</span>
               </div>
