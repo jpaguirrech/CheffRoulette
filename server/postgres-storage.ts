@@ -20,6 +20,27 @@ export class PostgresStorage implements IStorage {
   }
 
   async upsertUser(user: UpsertUser): Promise<User> {
+    // First, check if a user with this email already exists
+    if (user.email) {
+      const existingUser = await db.select().from(users).where(eq(users.email, user.email)).limit(1);
+      if (existingUser.length > 0) {
+        // Update the existing user with the new ID (from Google OAuth) and other details
+        const result = await db.update(users)
+          .set({
+            id: user.id, // Update to new Google OAuth ID
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+            username: user.username,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.email, user.email))
+          .returning();
+        return result[0];
+      }
+    }
+    
+    // If no existing user by email, try upsert by ID
     const result = await db.insert(users)
       .values(user)
       .onConflictDoUpdate({
