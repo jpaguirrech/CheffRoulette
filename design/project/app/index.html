@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>RecipeRoulette — Chef Roulette PWA</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#FF6B35"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Roulette"/>
+<link rel="apple-touch-icon" href="icons/icon-192.svg"/>
+<link rel="icon" href="icons/icon-192.svg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #eae4d8; overflow: hidden;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif; color: #1A1A1A;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  * { box-sizing: border-box; }
+  #root { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .stage { position: relative; display: flex; align-items: center; justify-content: center; gap: 32px; flex-wrap: wrap; padding: 20px; }
+  input, button { font-family: inherit; }
+  /* kill iOS blue highlight */
+  * { -webkit-tap-highlight-color: transparent; }
+  /* custom scrollbar — hide on mobile look */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/tokens.jsx"></script>
+<script type="text/babel" src="components/screens-core.jsx"></script>
+<script type="text/babel" src="components/screens-roulette.jsx"></script>
+<script type="text/babel" src="components/screens-social.jsx"></script>
+<script type="text/babel" src="components/screens-recipe.jsx"></script>
+<script type="text/babel" src="components/screens-misc.jsx"></script>
+
+<script type="text/babel">
+const { L, D, ThemeCtx, RouterProvider, useRoute,
+  SplashScreen, OnboardingScreen, ConnectScreen, HomeScreen, SearchScreen,
+  RouletteScreen, LobbyScreen, SwipeScreen, MatchScreen,
+  RecipeScreen, CookScreen, ShoppingScreen, RatingScreen,
+  CaptureScreen, ProfileScreen } = window;
+
+const SCREENS = {
+  splash: SplashScreen,
+  onboarding: OnboardingScreen,
+  connect: ConnectScreen,
+  home: HomeScreen,
+  search: SearchScreen,
+  roulette: RouletteScreen,
+  lobby: LobbyScreen,
+  swipe: SwipeScreen,
+  match: MatchScreen,
+  recipe: RecipeScreen,
+  cook: CookScreen,
+  shopping: ShoppingScreen,
+  rating: RatingScreen,
+  capture: CaptureScreen,
+  profile: ProfileScreen,
+};
+
+function ScreenHost() {
+  const r = useRoute();
+  const [prev, setPrev] = React.useState(null);
+  const [cur, setCur] = React.useState(r.screen);
+  const [transitioning, setTransitioning] = React.useState(false);
+  const dir = r.dir;
+
+  React.useEffect(() => {
+    if (r.screen !== cur) {
+      setPrev(cur);
+      setCur(r.screen);
+      setTransitioning(true);
+      const id = setTimeout(() => { setPrev(null); setTransitioning(false); }, 380);
+      return () => clearTimeout(id);
+    }
+  }, [r.screen, r.params]);
+
+  const Cur = SCREENS[cur] || HomeScreen;
+  const Prev = prev ? SCREENS[prev] : null;
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', background: '#000' }}>
+      {Prev && transitioning && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          transform: dir === 'forward' ? 'translateX(-30%)' : 'translateX(100%)',
+          transition: 'transform 380ms cubic-bezier(.32,.72,0,1)',
+          filter: dir === 'forward' ? 'brightness(0.8)' : 'none',
+          zIndex: 1,
+        }}>
+          <Prev />
+        </div>
+      )}
+      <div style={{
+        position: 'absolute', inset: 0,
+        animation: transitioning
+          ? (dir === 'forward' ? 'slide-in-right 380ms cubic-bezier(.32,.72,0,1) forwards'
+                               : 'slide-in-left 380ms cubic-bezier(.32,.72,0,1) forwards')
+          : 'none',
+        zIndex: 2,
+      }}>
+        <Cur />
+      </div>
+      <style>{`
+        @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slide-in-left  { from { transform: translateX(-30%); filter: brightness(0.8); } to { transform: translateX(0); filter: none; } }
+      `}</style>
+    </div>
+  );
+}
+
+// iOS-style phone frame (lightweight inline — no external starter needed so it bundles cleanly)
+function PhoneFrame({ children, label }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+      <div style={{
+        width: 380, height: 800, borderRadius: 54, background: '#0F0E10',
+        padding: 11, boxShadow: '0 30px 80px rgba(0,0,0,0.45), 0 6px 18px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06) inset',
+        position: 'relative',
+      }}>
+        <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 44, overflow: 'hidden', background: '#F7F4EE' }}>
+          {/* dynamic island */}
+          <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+            width: 116, height: 34, background: '#000', borderRadius: 999, zIndex: 100 }}/>
+          {/* status bar */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 52, zIndex: 99,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 26px',
+            fontSize: 14, fontWeight: 700, fontFamily: '-apple-system, "SF Pro Text", sans-serif', color: '#1A1A1A', pointerEvents: 'none' }}>
+            <span>9:41</span>
+            <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 11 }}>
+              <span>●●●●</span>
+              <span>📶</span>
+              <span>🔋</span>
+            </span>
+          </div>
+          <div style={{ position: 'absolute', inset: '52px 0 0 0' }}>
+            {children}
+          </div>
+          {/* home indicator */}
+          <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)',
+            width: 134, height: 5, background: '#1A1A1A', borderRadius: 999, opacity: 0.3, zIndex: 100 }}/>
+        </div>
+      </div>
+      {label && <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.5)', fontWeight: 600 }}>{label}</div>}
+    </div>
+  );
+}
+
+function App() {
+  const [dark, setDark] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem('rr_dark') || 'false'); } catch { return false; }
+  });
+  const toggle = React.useCallback(() => setDark(d => { const n = !d; try { localStorage.setItem('rr_dark', JSON.stringify(n)); } catch {} return n; }), []);
+  const t = dark ? D : L;
+  const theme = { t, dark, toggle };
+
+  // responsive scale
+  const [scale, setScale] = React.useState(1);
+  React.useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth, h = window.innerHeight;
+      // single-frame layout needs ~440x880 incl label and padding
+      const s = Math.min(w / 440, h / 880, 1.1);
+      setScale(s);
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, []);
+
+  // Update page background for dark mode
+  React.useEffect(() => {
+    document.body.style.background = dark ? '#0a0a0c' : '#eae4d8';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0F0E10' : '#FF6B35');
+  }, [dark]);
+
+  return (
+    <ThemeCtx.Provider value={theme}>
+      <RouterProvider initial="splash">
+        <div className="stage" style={{ transform: `scale(${scale})`, transformOrigin: 'center center' }}>
+          <PhoneFrame>
+            <ScreenHost />
+          </PhoneFrame>
+        </div>
+      </RouterProvider>
+    </ThemeCtx.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+// Register service worker
+if ('serviceWorker' in navigator && location.protocol !== 'blob:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

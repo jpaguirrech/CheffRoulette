@@ -1,0 +1,23 @@
+{
+  "name": "RecipeRoulette · Chef Roulette",
+  "short_name": "Roulette",
+  "description": "Turn your TikTok, Instagram, and YouTube food saves into cookable recipes — spin the roulette or vote with friends.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F4EE",
+  "theme_color": "#FF6B35",
+  "categories": ["food", "lifestyle", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "icons/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-maskable.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Spin the roulette", "short_name": "Spin", "url": "./?screen=roulette", "icons": [{ "src": "icons/icon-192.svg", "sizes": "192x192" }] },
+    { "name": "New vote with friends", "short_name": "Vote", "url": "./?screen=lobby", "icons": [{ "src": "icons/icon-192.svg", "sizes": "192x192" }] }
+  ]
+}

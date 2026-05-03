@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>RecipeRoulette — PWA Redesign Canvas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+    body { min-height: 100vh; overflow: hidden; }
+    #root { width: 100vw; height: 100vh; }
+    * { box-sizing: border-box; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- UI kit -->
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="android-frame.jsx"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <!-- screens -->
+  <script type="text/babel" src="screens/shared.jsx"></script>
+  <script type="text/babel" src="screens/dusk.jsx"></script>
+  <script type="text/babel" src="screens/glass.jsx"></script>
+  <script type="text/babel" src="screens/clay.jsx"></script>
+
+  <script type="text/babel">
+    const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+    const { IOSDevice } = window;
+    const { AndroidDevice } = window;
+
+    // Wrapper: render a React screen inside an iOS device shell sized to fit
+    // the artboard. We use a fixed logical viewport of 390×844 (iPhone 15) and
+    // let the artboard scale to fit.
+    function PhoneScreen({ Screen, device = 'ios', dark = false }) {
+      const Device = device === 'ios' ? window.IOSDevice : window.AndroidDevice;
+      return (
+        <Device statusBarDark={dark} bgColor={dark ? '#0B0910' : '#F7F4EE'}>
+          <Screen/>
+        </Device>
+      );
+    }
+
+    // Fallback — if the starter frame doesn't accept children the way we expect,
+    // render just the screen inside a simple phone bezel.
+    function BarePhone({ children, dark }) {
+      return (
+        <div style={{
+          width: 390, height: 844, borderRadius: 52,
+          background: '#111', padding: 12, boxShadow: '0 30px 60px rgba(0,0,0,0.3)',
+          position: 'relative',
+        }}>
+          <div style={{
+            width: '100%', height: '100%', borderRadius: 42,
+            overflow: 'hidden', background: dark ? '#0B0910' : '#fff', position: 'relative',
+          }}>
+            {children}
+            {/* notch */}
+            <div style={{
+              position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)',
+              width: 120, height: 32, borderRadius: 20, background: '#000', zIndex: 50,
+            }} />
+          </div>
+        </div>
+      );
+    }
+
+    // Use IOSDevice if it exists and accepts children; otherwise fall back.
+    function Phone({ Screen, dark, platform = 'ios' }) {
+      // Try the starter component first — it wraps in a proper bezel
+      const Device = platform === 'ios' ? window.IOSDevice : window.AndroidDevice;
+      if (Device) {
+        return (
+          <Device dark={dark}>
+            <Screen/>
+          </Device>
+        );
+      }
+      return <BarePhone dark={dark}><Screen/></BarePhone>;
+    }
+
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection id="intro" title="RecipeRoulette · PWA Redesign"
+            subtitle="Three directions × key screens. iOS + Android per direction. Drag to reorder; tap ⤢ to focus.">
+            <DCPostIt left={40} top={40} width={280} rotate={-2}>
+              <b>The brief:</b> redesign the mobile PWA end-to-end as a true mobile-first app.
+              Core loop = <i>save from social → roulette or friend-vote → cook</i>.
+              <br/><br/>
+              <b>3 directions:</b><br/>
+              🌙 <b>Dusk</b> — dark neon, late-night energy<br/>
+              🧊 <b>Glass</b> — Apple-native, calm, editorial<br/>
+              🫧 <b>Clay</b> — soft 3D, playful, family
+            </DCPostIt>
+          </DCSection>
+
+          {/* ─── DIRECTION A · DUSK */}
+          <DCSection id="dusk" title="A · Dusk"
+            subtitle="Dark neon kitchen. Hot-magenta + lime. Fast, bold, late-night decide-in-30-sec energy.">
+            <DCArtboard id="dusk-home" label="Home · iOS" width={390} height={844}>
+              <window.IOSDevice dark><window.DuskHome/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="dusk-roulette" label="Roulette wheel · iOS" width={390} height={844}>
+              <window.IOSDevice dark><window.DuskRoulette/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="dusk-vote" label="Swipe vote · iOS" width={390} height={844}>
+              <window.IOSDevice dark><window.DuskVote/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="dusk-capture" label="Capture · Android" width={412} height={892}>
+              <window.AndroidDevice dark><window.DuskCapture/></window.AndroidDevice>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ─── DIRECTION B · GLASS */}
+          <DCSection id="glass" title="B · Glass"
+            subtitle="iOS-native feel. Warm off-white, liquid glass blurs, editorial serif headlines.">
+            <DCArtboard id="glass-home" label="Home · iOS" width={390} height={844}>
+              <window.IOSDevice><window.GlassHome/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="glass-roulette" label="Slot reels roulette · iOS" width={390} height={844}>
+              <window.IOSDevice><window.GlassRoulette/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="glass-vote" label="Swipe vote · iOS" width={390} height={844}>
+              <window.IOSDevice><window.GlassVote/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="glass-result" label="Recipe / cook mode · Android" width={412} height={892}>
+              <window.AndroidDevice><window.GlassResult/></window.AndroidDevice>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ─── DIRECTION C · CLAY */}
+          <DCSection id="clay" title="C · Clay"
+            subtitle="Soft 3D, pastel gradients, chunky offset shadows. Playful, joyful, low-stakes.">
+            <DCArtboard id="clay-onboard" label="Connect socials · iOS" width={390} height={844}>
+              <window.IOSDevice><window.ClayOnboarding/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="clay-home" label="Home · iOS" width={390} height={844}>
+              <window.IOSDevice><window.ClayHome/></window.IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="clay-result" label="Match celebration · Android" width={412} height={892}>
+              <window.AndroidDevice><window.ClayResult/></window.AndroidDevice>
+            </DCArtboard>
+          </DCSection>
+
+          {/* ─── NOTES */}
+          <DCSection id="notes" title="Design decisions & next steps"
+            subtitle="">
+            <DCPostIt left={40} top={40} width={260} rotate={-2}>
+              <b>Why three directions?</b><br/>
+              Each targets a different moment: Dusk = night-solo speed, Glass = calm family planning,
+              Clay = onboarding + group joy. Mix freely.
+            </DCPostIt>
+            <DCPostIt left={340} top={40} width={260} rotate={1}>
+              <b>Source = first-class.</b><br/>
+              Every recipe card carries a platform badge (TikTok / IG / YT / Pinterest).
+              Import is a hero flow: paste URL <i>or</i> OAuth sync saved videos.
+            </DCPostIt>
+            <DCPostIt left={640} top={40} width={260} rotate={-1}>
+              <b>Roulette — two variants.</b><br/>
+              Classic wheel (Dusk) = dopamine + shareable.
+              Slot reels (Glass) = lock reels (cuisine / vibe / time).
+            </DCPostIt>
+            <DCPostIt left={40} top={260} width={260} rotate={2}>
+              <b>Group vote = Tinder for recipes.</b><br/>
+              Live session, 5 friends, 8 cards, mutual likes surface as matches.
+              Shared list + schedule follow-on.
+            </DCPostIt>
+            <DCPostIt left={340} top={260} width={260} rotate={-1}>
+              <b>Next to mock:</b> cook mode w/ timers,
+              post-cook rating (feeds recommender),
+              shopping list w/ Instacart handoff,
+              profile + streaks.
+            </DCPostIt>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
