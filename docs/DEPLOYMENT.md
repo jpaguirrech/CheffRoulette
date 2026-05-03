@@ -33,12 +33,21 @@
 
 The browser sees a single origin (`reciperoulette.web.app` or custom domain) thanks to Firebase Hosting rewrites. Cloud Run is private — no direct public access — once we lock it down with `--ingress=internal-and-cloud-load-balancing`, but during initial setup we leave it `--allow-unauthenticated` and rely on Hosting being the only client.
 
+## Project state (as of CLI bootstrap)
+
+- **Firebase project:** `cheff-roulette` (project number `489187873945`)
+- **Plan:** Spark (free) — **must upgrade to Blaze before Phase 5** for Hosting → Cloud Run rewrites to work.
+- **Web app registered:** "Chef Roulette PWA", App ID `1:489187873945:web:7d953f9a0d4233ce88d408`. Public config committed at `client/src/config/firebase.ts`.
+- **Auth providers:** none enabled yet. Phase 4 needs Google + Anonymous toggled in the console.
+- **Hosting:** initialized via `firebase.json` at repo root, points to `dist/public`. No Cloud Run rewrite yet (added in Phase 5).
+- **`.firebaserc`:** default project alias = `cheff-roulette`.
+
 ## What I need from you to run the first deploy
 
 Before Phase 5 starts, please provide (paste here, or set as Cloud Run secrets, or hand me a service account that can read them):
 
-1. **GCP project ID** — billing must be enabled. e.g. `chef-roulette-prod`.
-2. **Firebase project linked to that GCP project**. Run `firebase init` once locally, or share an existing one. Project ID matches GCP.
+1. **GCP project ID** — billing must be enabled. Currently `cheff-roulette` on Spark; **upgrade to Blaze required**.
+2. **Firebase project linked to that GCP project**. Already done — same ID `cheff-roulette`.
 3. **Service account JSON** for CI deploys, with these roles:
    - `roles/run.admin` (deploy to Cloud Run)
    - `roles/cloudbuild.builds.editor` (Cloud Build trigger)

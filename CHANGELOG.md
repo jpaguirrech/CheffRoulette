@@ -16,6 +16,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `.claude/agents/design-fidelity.md` — subagent that compares implemented screens against the design bundle and flags deviations.
 - This changelog.
 
+### Added (CLI bootstrap)
+- `firebase-tools` as devDependency.
+- `firebase.json` with Hosting config (cache headers, SPA fallback). No Cloud Run rewrite yet.
+- `.firebaserc` with `cheff-roulette` as default project alias.
+- `client/src/config/firebase.ts` with the public web SDK config (apiKey is project-identifier, not a secret).
+- Web app "Chef Roulette PWA" registered in the Firebase project via CLI.
+
 ### Notes
 - No application code changes in this entry. Phase 1 (cleanup) is the next merge.
 - Pre-pivot history lives in `replit.md`. Going forward, all changes are tracked here.
+- Firebase project is on Spark plan; **upgrade to Blaze is a Phase 5 prerequisite** for Cloud Run rewrites.
