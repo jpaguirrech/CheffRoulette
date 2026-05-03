@@ -159,22 +159,21 @@ export class WebhookRecipeService {
             }
           }
           
-          throw new Error('Unable to parse webhook response - unexpected format');
+          throw new Error('Unable to parse webhook response - unexpected format', { cause: objectError });
         }
       }
 
     } catch (error) {
       console.error('❌ Webhook service error:', error);
-      
-      // Handle different types of errors
+
       if (error instanceof z.ZodError) {
-        throw new Error(`Invalid data format: ${error.message}`);
+        throw new Error(`Invalid data format: ${error.message}`, { cause: error });
       }
-      
+
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('Network error: Unable to connect to video processing service');
+        throw new Error('Network error: Unable to connect to video processing service', { cause: error });
       }
-      
+
       throw error;
     }
   }

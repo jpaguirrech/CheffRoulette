@@ -1,33 +1,40 @@
-import { 
-  users, socialMediaContent, extractedRecipes, recipes, challenges, userChallenges, userRecipeActions,
+import {
+  users, socialMediaContent, extractedRecipes, challenges, userChallenges, userRecipeActions,
   type User, type InsertUser, type UpsertUser,
   type SocialMediaContent, type InsertSocialMediaContent,
   type ExtractedRecipe, type InsertExtractedRecipe,
-  type Recipe, type InsertRecipe, 
-  type Challenge, type InsertChallenge, type UserChallenge, type InsertUserChallenge,
-  type UserRecipeAction, type InsertUserRecipeAction
+  type Challenge,
+  type UserChallenge,
+  type UserRecipeAction, type InsertUserRecipeAction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
-import type { IStorage, RecipeFilters, ExtractedRecipeFilters } from "./storage";
+import { eq, and, desc } from "drizzle-orm";
 
-export class PostgresStorage implements IStorage {
-  
-  // User operations
+export interface ExtractedRecipeFilters {
+  cuisineType?: string;
+  difficultyLevel?: string;
+  mealType?: string;
+  maxPrepTime?: number;
+  maxCookTime?: number;
+  dietaryTags?: string[];
+}
+
+export class PostgresStorage {
+  // ─── Users ────────────────────────────────────────────────────────────
   async getUser(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
   }
 
   async upsertUser(user: UpsertUser): Promise<User> {
-    // First, check if a user with this email already exists
+    // If a user with this email already exists, update its id (handles
+    // login provider changes that mint a new external id for the same person).
     if (user.email) {
       const existingUser = await db.select().from(users).where(eq(users.email, user.email)).limit(1);
       if (existingUser.length > 0) {
-        // Update the existing user with the new ID (from Google OAuth) and other details
         const result = await db.update(users)
           .set({
-            id: user.id, // Update to new Google OAuth ID
+            id: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
             profileImageUrl: user.profileImageUrl,
@@ -39,8 +46,7 @@ export class PostgresStorage implements IStorage {
         return result[0];
       }
     }
-    
-    // If no existing user by email, try upsert by ID
+
     const result = await db.insert(users)
       .values(user)
       .onConflictDoUpdate({
@@ -81,7 +87,7 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
-  // Social Media Content operations
+  // ─── Social media content ─────────────────────────────────────────────
   async createSocialMediaContent(content: InsertSocialMediaContent): Promise<SocialMediaContent> {
     const result = await db.insert(socialMediaContent).values(content).returning();
     return result[0];
@@ -101,16 +107,16 @@ export class PostgresStorage implements IStorage {
 
   async updateSocialMediaContentStatus(id: string, status: string, processedAt?: Date): Promise<SocialMediaContent | undefined> {
     const result = await db.update(socialMediaContent)
-      .set({ 
-        status, 
-        processedAt: processedAt || new Date() 
+      .set({
+        status,
+        processedAt: processedAt || new Date(),
       })
       .where(eq(socialMediaContent.id, id))
       .returning();
     return result[0];
   }
 
-  // Extracted Recipe operations
+  // ─── Extracted recipes ────────────────────────────────────────────────
   async createExtractedRecipe(recipe: InsertExtractedRecipe): Promise<ExtractedRecipe> {
     const result = await db.insert(extractedRecipes).values(recipe).returning();
     return result[0];
@@ -138,32 +144,9 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUserExtractedRecipes(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe[]> {
-    let query = db.select({
-      id: extractedRecipes.id,
-      socialMediaContentId: extractedRecipes.socialMediaContentId,
-      recipeTitle: extractedRecipes.recipeTitle,
-      description: extractedRecipes.description,
-      ingredients: extractedRecipes.ingredients,
-      instructions: extractedRecipes.instructions,
-      prepTime: extractedRecipes.prepTime,
-      cookTime: extractedRecipes.cookTime,
-      totalTime: extractedRecipes.totalTime,
-      servings: extractedRecipes.servings,
-      difficultyLevel: extractedRecipes.difficultyLevel,
-      cuisineType: extractedRecipes.cuisineType,
-      mealType: extractedRecipes.mealType,
-      dietaryTags: extractedRecipes.dietaryTags,
-      chefAttribution: extractedRecipes.chefAttribution,
-      aiConfidenceScore: extractedRecipes.aiConfidenceScore,
-      status: extractedRecipes.status,
-      createdAt: extractedRecipes.createdAt,
-    })
-    .from(extractedRecipes)
-    .innerJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id));
-
-    let whereConditions = [
+    const whereConditions = [
       eq(socialMediaContent.userId, userId),
-      eq(extractedRecipes.status, "published")
+      eq(extractedRecipes.status, "published"),
     ];
 
     if (filters?.cuisineType) {
@@ -176,80 +159,21 @@ export class PostgresStorage implements IStorage {
       whereConditions.push(eq(extractedRecipes.mealType, filters.mealType));
     }
 
-    query = query.where(and(...whereConditions));
-    
-    
-    return await query.orderBy(desc(socialMediaContent.createdAt));
+    return await db.select()
+      .from(extractedRecipes)
+      .innerJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
+      .where(and(...whereConditions))
+      .orderBy(desc(socialMediaContent.createdAt))
+      .then(rows => rows.map(r => r.extracted_recipes));
   }
 
   async getRandomExtractedRecipe(userId: string, filters?: ExtractedRecipeFilters): Promise<ExtractedRecipe | undefined> {
     const recipes = await this.getUserExtractedRecipes(userId, filters);
     if (recipes.length === 0) return undefined;
-    
-    const randomIndex = Math.floor(Math.random() * recipes.length);
-    return recipes[randomIndex];
+    return recipes[Math.floor(Math.random() * recipes.length)];
   }
 
-  // Legacy Recipe operations (keeping for backwards compatibility)
-  async getRecipe(id: number): Promise<Recipe | undefined> {
-    const result = await db.select().from(recipes).where(eq(recipes.id, id)).limit(1);
-    return result[0];
-  }
-
-  async getRecipes(userId?: string, filters?: RecipeFilters): Promise<Recipe[]> {
-    let whereConditions = [];
-    
-    if (userId) {
-      whereConditions.push(eq(recipes.userId, userId));
-    }
-    
-    // Apply filters if provided
-    if (filters?.cuisine) {
-      whereConditions.push(eq(recipes.cuisine, filters.cuisine));
-    }
-    if (filters?.difficulty) {
-      whereConditions.push(eq(recipes.difficulty, filters.difficulty));
-    }
-    if (filters?.category) {
-      whereConditions.push(eq(recipes.category, filters.category));
-    }
-    
-    const query = db.select().from(recipes);
-    
-    if (whereConditions.length > 0) {
-      return await query.where(and(...whereConditions));
-    }
-    
-    return await query;
-  }
-
-  async createRecipe(recipe: InsertRecipe): Promise<Recipe> {
-    const result = await db.insert(recipes).values(recipe).returning();
-    return result[0];
-  }
-
-  async updateRecipe(id: number, updates: Partial<Recipe>): Promise<Recipe | undefined> {
-    const result = await db.update(recipes)
-      .set(updates)
-      .where(eq(recipes.id, id))
-      .returning();
-    return result[0];
-  }
-
-  async deleteRecipe(id: number): Promise<boolean> {
-    const result = await db.delete(recipes).where(eq(recipes.id, id));
-    return (result.rowCount || 0) > 0;
-  }
-
-  async getRandomRecipe(filters?: RecipeFilters): Promise<Recipe | undefined> {
-    const allRecipes = await this.getRecipes(undefined, filters);
-    if (allRecipes.length === 0) return undefined;
-    
-    const randomIndex = Math.floor(Math.random() * allRecipes.length);
-    return allRecipes[randomIndex];
-  }
-
-  // Challenge operations
+  // ─── Challenges ───────────────────────────────────────────────────────
   async getChallenges(): Promise<Challenge[]> {
     return await db.select().from(challenges).where(eq(challenges.isActive, true));
   }
@@ -259,7 +183,7 @@ export class PostgresStorage implements IStorage {
       .from(userChallenges)
       .where(and(
         eq(userChallenges.userId, userId),
-        eq(userChallenges.completed, false)
+        eq(userChallenges.completed, false),
       ));
   }
 
@@ -268,25 +192,23 @@ export class PostgresStorage implements IStorage {
       .set({ progress })
       .where(and(
         eq(userChallenges.userId, userId),
-        eq(userChallenges.challengeId, challengeId)
+        eq(userChallenges.challengeId, challengeId),
       ))
       .returning();
     return result[0];
   }
 
-  // User actions
+  // ─── User actions ─────────────────────────────────────────────────────
   async recordUserAction(action: InsertUserRecipeAction): Promise<UserRecipeAction> {
     const result = await db.insert(userRecipeActions).values(action).returning();
     return result[0];
   }
 
-  async getUserActions(userId: string, recipeId?: number): Promise<UserRecipeAction[]> {
-    let whereConditions = [eq(userRecipeActions.userId, userId)];
-    
+  async getUserActions(userId: string, recipeId?: string): Promise<UserRecipeAction[]> {
+    const whereConditions = [eq(userRecipeActions.userId, userId)];
     if (recipeId) {
       whereConditions.push(eq(userRecipeActions.recipeId, recipeId));
     }
-    
     return await db.select()
       .from(userRecipeActions)
       .where(and(...whereConditions))

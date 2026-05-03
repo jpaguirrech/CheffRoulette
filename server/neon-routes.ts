@@ -163,29 +163,22 @@ export async function getExtractedRecipeDetails(req: any, res: Response) {
         confidence: extractedRecipes.aiConfidenceScore,
         status: extractedRecipes.status,
         createdAt: extractedRecipes.createdAt,
-        
-        // Social media content details
+
         platform: socialMediaContent.platform,
         originalUrl: socialMediaContent.originalUrl,
         contentTitle: socialMediaContent.title,
-        author: socialMediaContent.author,
-        authorUsername: socialMediaContent.authorUsername,
-        duration: socialMediaContent.duration,
-        views: socialMediaContent.views,
-        likes: socialMediaContent.likes
       })
       .from(extractedRecipes)
       .leftJoin(socialMediaContent, eq(extractedRecipes.socialMediaContentId, socialMediaContent.id))
       .where(eq(extractedRecipes.id, recipeId))
       .limit(1);
-    
+
     if (recipe.length === 0) {
       return res.status(404).json({ message: 'Recipe not found' });
     }
-    
+
     const recipeData = recipe[0];
-    
-    // Transform for frontend
+
     const transformedRecipe = {
       id: recipeData.id,
       title: recipeData.title,
@@ -202,22 +195,18 @@ export async function getExtractedRecipeDetails(req: any, res: Response) {
       dietaryTags: recipeData.dietaryTags || [],
       platform: recipeData.platform || 'unknown',
       originalUrl: recipeData.originalUrl,
-      username: recipeData.authorUsername || recipeData.author || 'Unknown Chef',
+      username: recipeData.chef || recipeData.contentTitle || 'Unknown Chef',
       imageUrl: recipeData.imageUrl || getDefaultImageForPlatform(recipeData.platform || 'tiktok'),
       rating: 0,
       confidence: recipeData.confidence,
       createdAt: recipeData.createdAt,
-      
-      // Additional metadata
+
       socialMedia: {
         platform: recipeData.platform,
-        author: recipeData.author,
-        authorUsername: recipeData.authorUsername,
-        duration: recipeData.duration,
-        views: recipeData.views,
-        likes: recipeData.likes,
-        originalUrl: recipeData.originalUrl
-      }
+        author: recipeData.chef,
+        authorUsername: recipeData.chef,
+        originalUrl: recipeData.originalUrl,
+      },
     };
     
     console.log(`✅ Recipe found: ${recipeData.title}`);
@@ -289,7 +278,7 @@ export async function getRandomExtractedRecipe(req: any, res: Response) {
       instructions: recipe.instructions || [],
       prepTime: recipe.prepTime || 0,
       cookTime: recipe.cookTime || 0,
-      totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
+      totalTime: recipe.totalTime || (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0),
       servings: recipe.servings || 1,
       difficulty: recipe.difficultyLevel || 'medium',
       cuisine: recipe.cuisineType || 'International',
@@ -364,7 +353,7 @@ export async function getRecipeById(recipeId: string) {
       instructions: recipe.instructions || [],
       prepTime: recipe.prepTime || 0,
       cookTime: recipe.cookTime || 0,
-      totalTime: recipe.totalTime || recipe.prepTime + recipe.cookTime,
+      totalTime: recipe.totalTime || (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0),
       servings: recipe.servings || 1,
       difficulty: recipe.difficultyLevel || 'medium',
       cuisine: recipe.cuisineType || 'International',

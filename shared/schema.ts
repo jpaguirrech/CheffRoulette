@@ -34,7 +34,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Social media content table - matches new API structure
+// Source social-media post that a recipe was extracted from.
 export const socialMediaContent = pgTable("social_media_content", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: varchar("user_id").notNull(),
@@ -47,7 +47,7 @@ export const socialMediaContent = pgTable("social_media_content", {
   processedAt: timestamp("processed_at"),
 });
 
-// Extracted recipes table - matches new API structure
+// Recipe extracted from a social_media_content row by the external webhook.
 export const extractedRecipes = pgTable("extracted_recipes", {
   id: uuid("id").primaryKey().defaultRandom(),
   socialMediaContentId: uuid("social_media_content_id").notNull(),
@@ -68,30 +68,6 @@ export const extractedRecipes = pgTable("extracted_recipes", {
   aiConfidenceScore: decimal("ai_confidence_score", { precision: 3, scale: 2 }),
   status: varchar("status").notNull().default("published"), // draft, published, archived
   createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Legacy recipes table - keeping for backwards compatibility
-export const recipes = pgTable("recipes", {
-  id: serial("id").primaryKey(),
-  userId: varchar("user_id").notNull(),
-  title: text("title").notNull(),
-  description: text("description"),
-  ingredients: text("ingredients").array().notNull(),
-  instructions: text("instructions").array().notNull(),
-  cookTime: integer("cook_time"), // in minutes
-  servings: integer("servings"),
-  cuisine: text("cuisine"),
-  difficulty: text("difficulty"), // Easy, Medium, Hard
-  category: text("category"), // Breakfast, Lunch, Dinner, Dessert, Snack
-  dietaryTags: text("dietary_tags").array().default([]), // Vegetarian, Vegan, Keto, etc.
-  sourceUrl: text("source_url"),
-  sourcePlatform: text("source_platform"), // TikTok, Instagram, YouTube, Pinterest
-  sourceUsername: text("source_username"),
-  imageUrl: text("image_url"),
-  likes: integer("likes").default(0),
-  isBookmarked: boolean("is_bookmarked").default(false),
-  nutritionData: jsonb("nutrition_data"), // Pro feature
-  carbonScore: integer("carbon_score"), // Pro feature
 });
 
 export const challenges = pgTable("challenges", {
@@ -116,7 +92,7 @@ export const userChallenges = pgTable("user_challenges", {
 export const userRecipeActions = pgTable("user_recipe_actions", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
-  recipeId: integer("recipe_id").notNull(),
+  recipeId: uuid("recipe_id").notNull(), // FK to extracted_recipes.id
   action: text("action").notNull(), // cooked, liked, shared, bookmarked
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -131,7 +107,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
-// New schema types for the API structure
 export const insertSocialMediaContentSchema = createInsertSchema(socialMediaContent).omit({
   id: true,
   createdAt: true,
@@ -150,13 +125,6 @@ export const updateExtractedRecipeSchema = createInsertSchema(extractedRecipes).
   status: true,
   aiConfidenceScore: true,
 }).partial();
-
-// Legacy recipe schema
-export const insertRecipeSchema = createInsertSchema(recipes).omit({
-  id: true,
-  likes: true,
-  isBookmarked: true,
-});
 
 export const insertChallengeSchema = createInsertSchema(challenges).omit({
   id: true,
@@ -178,19 +146,52 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpsertUser = typeof users.$inferInsert;
 
-// New types for API structure
 export type SocialMediaContent = typeof socialMediaContent.$inferSelect;
 export type InsertSocialMediaContent = z.infer<typeof insertSocialMediaContentSchema>;
 export type ExtractedRecipe = typeof extractedRecipes.$inferSelect;
 export type InsertExtractedRecipe = z.infer<typeof insertExtractedRecipeSchema>;
 export type UpdateExtractedRecipe = z.infer<typeof updateExtractedRecipeSchema>;
 
-// Legacy types
-export type Recipe = typeof recipes.$inferSelect;
-export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
 export type Challenge = typeof challenges.$inferSelect;
 export type InsertChallenge = z.infer<typeof insertChallengeSchema>;
 export type UserChallenge = typeof userChallenges.$inferSelect;
 export type InsertUserChallenge = z.infer<typeof insertUserChallengeSchema>;
 export type UserRecipeAction = typeof userRecipeActions.$inferSelect;
 export type InsertUserRecipeAction = z.infer<typeof insertUserRecipeActionSchema>;
+
+// ─── Legacy presentation types (to be removed in Phase 3) ──────────────
+// These describe the transformed shape that server/neon-routes.ts returns
+// to the existing React pages, NOT a real DB row. The PWA rewrite in
+// Phase 3 will remove these along with the legacy pages that consume them.
+// Heterogeneous payload from neon-routes.ts; tightened in Phase 3 PWA rewrite.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyArray = any[];
+export type Recipe = {
+  id: string;
+  title: string;
+  description?: string | null;
+  ingredients: AnyArray;
+  instructions: AnyArray;
+  prepTime?: number;
+  cookTime?: number;
+  totalTime?: number;
+  servings?: number;
+  difficulty?: string;
+  cuisine?: string;
+  category?: string;
+  dietaryTags: string[];
+  platform?: string;
+  originalUrl?: string | null;
+  username?: string;
+  sourceUrl?: string;
+  sourcePlatform?: string;
+  sourceUsername?: string;
+  imageUrl?: string;
+  likes?: number | null;
+  isBookmarked?: boolean | null;
+  rating?: number;
+  userId?: string;
+  nutritionData?: unknown;
+  carbonScore?: number;
+};
+export type InsertRecipe = Omit<Recipe, "id"> & { userId: string };

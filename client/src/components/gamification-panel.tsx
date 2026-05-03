@@ -18,7 +18,7 @@ export default function GamificationPanel({ user }: GamificationPanelProps) {
   if (!user) return null;
 
   const activeChallenge = challenges?.[0];
-  const challengeProgress = activeChallenge ? (activeChallenge.progress / 5) * 100 : 0;
+  const challengeProgress = activeChallenge ? ((activeChallenge.progress ?? 0) / 5) * 100 : 0;
 
   return (
     <Card className="mb-6">
